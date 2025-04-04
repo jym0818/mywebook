@@ -29,6 +29,33 @@ func NewUserHandler(svc service.UserService) *UserHandler {
 func (h *UserHandler) RegisterRouters(s *gin.Engine) {
 	ug := s.Group("/user")
 	ug.POST("/signup", h.Signup)
+	ug.POST("/login", h.Login)
+}
+
+func (h *UserHandler) Login(c *gin.Context) {
+	type Req struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+	var req Req
+	if err := c.Bind(&req); err != nil {
+		c.JSON(http.StatusOK, Result{Msg: "系统错误"})
+		return
+	}
+	u, err := h.svc.Login(c.Request.Context(), req.Email, req.Password)
+	if err == service.ErrUserNotExists {
+		c.JSON(http.StatusOK, Result{Msg: "账号或者密码错误"})
+		return
+	}
+
+	if err != nil {
+		c.JSON(http.StatusOK, Result{Msg: "系统错误"})
+		return
+	}
+	c.JSON(http.StatusOK, Result{
+		Msg:  "登录成功",
+		Data: u,
+	})
 }
 
 func (h *UserHandler) Signup(c *gin.Context) {

@@ -8,13 +8,20 @@ import (
 )
 
 var ErrUserDuplicateEmail = dao.ErrUserDuplicateEmail
+var ErrUserNotExists = dao.ErrUserNotExists
 
 type UserRepository interface {
 	Create(ctx context.Context, user domain.User) error
+	FindByEmail(ctx context.Context, email string) (domain.User, error)
 }
 
 type userRepository struct {
 	dao dao.UserDAO
+}
+
+func (repo *userRepository) FindByEmail(ctx context.Context, email string) (domain.User, error) {
+	u, err := repo.dao.FindByEmail(ctx, email)
+	return repo.toDomain(u), err
 }
 
 func NewuserRepository(dao dao.UserDAO) UserRepository {

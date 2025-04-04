@@ -9,13 +9,21 @@ import (
 )
 
 var ErrUserDuplicateEmail = errors.New("邮件冲突")
+var ErrUserNotExists = gorm.ErrRecordNotFound
 
 type UserDAO interface {
 	Insert(ctx context.Context, user User) error
+	FindByEmail(ctx context.Context, email string) (User, error)
 }
 
 type userDAO struct {
 	db *gorm.DB
+}
+
+func (u *userDAO) FindByEmail(ctx context.Context, email string) (User, error) {
+	var user User
+	err := u.db.WithContext(ctx).Where("email = ?", email).First(&user).Error
+	return user, err
 }
 
 func (u *userDAO) Insert(ctx context.Context, user User) error {
