@@ -8,6 +8,8 @@ import (
 	"github.com/jym/mywebook/internal/service"
 	"github.com/jym/mywebook/internal/web"
 	"github.com/jym/mywebook/internal/web/middlewares"
+	"github.com/jym/mywebook/pkg/ginx/middlewares/ratelimit"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"strings"
@@ -16,6 +18,14 @@ import (
 
 func main() {
 	r := gin.Default()
+	cmd := redis.NewClient(&redis.Options{
+		Addr:     "47.120.51.5:6379",
+		Password: "",
+		DB:       1,
+	})
+	// 一分钟 100 次。
+	r.Use(ratelimit.NewBuilder(cmd, time.Minute, 100).Build())
+
 	r.Use(cors.New(cors.Config{
 		// 允许的源地址（CORS中的Access-Control-Allow-Origin）
 		// AllowOrigins: []string{"https://foo.com"},
