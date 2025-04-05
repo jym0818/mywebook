@@ -57,7 +57,8 @@ func (h *UserHandler) Login(c *gin.Context) {
 	}
 	//保持登录状态
 	token := jwt.NewWithClaims(jwt.SigningMethodHS512, UserClaims{
-		Uid: u.Id,
+		Uid:       u.Id,
+		UserAgent: c.GetHeader("User-Agent"),
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute)),
 		},
@@ -139,5 +140,6 @@ func (h *UserHandler) Profile(ctx *gin.Context) {
 
 type UserClaims struct {
 	jwt.RegisteredClaims
-	Uid int64
+	Uid       int64
+	UserAgent string
 }
