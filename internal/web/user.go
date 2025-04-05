@@ -3,9 +3,11 @@ package web
 import (
 	regexp "github.com/dlclark/regexp2"
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/jym/mywebook/internal/domain"
 	"github.com/jym/mywebook/internal/service"
 	"net/http"
+	"time"
 )
 
 const emailRegexPattern = "^\\w+([-+.]\\w+)*@\\w+([-.]\\w+)*\\.\\w+([-.]\\w+)*$"
@@ -30,6 +32,7 @@ func (h *UserHandler) RegisterRouters(s *gin.Engine) {
 	ug := s.Group("/user")
 	ug.POST("/signup", h.Signup)
 	ug.POST("/login", h.Login)
+	ug.POST("/profile", h.Profile)
 }
 
 func (h *UserHandler) Login(c *gin.Context) {
@@ -52,6 +55,20 @@ func (h *UserHandler) Login(c *gin.Context) {
 		c.JSON(http.StatusOK, Result{Msg: "系统错误"})
 		return
 	}
+	//保持登录状态
+	token := jwt.NewWithClaims(jwt.SigningMethodHS512, UserClaims{
+		Uid: u.Id,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute)),
+		},
+	})
+	tokenStr, err := token.SignedString([]byte("sDKU8mor4FhrCDsFmmMYifqYb8u2X4c7"))
+	if err != nil {
+		c.JSON(http.StatusOK, Result{Msg: "系统错误"})
+		return
+	}
+	c.Header("x-jwt-token", tokenStr)
+
 	c.JSON(http.StatusOK, Result{
 		Msg:  "登录成功",
 		Data: u,
@@ -112,4 +129,15 @@ func (h *UserHandler) Signup(c *gin.Context) {
 
 	c.JSON(http.StatusOK, Result{Msg: "注册成功"})
 
+}
+
+func (h *UserHandler) Profile(ctx *gin.Context) {
+	claims := ctx.MustGet("claims").(UserClaims)
+	ctx.JSON(http.StatusOK, Result{Data: claims})
+
+}
+
+type UserClaims struct {
+	jwt.RegisteredClaims
+	Uid int64
 }

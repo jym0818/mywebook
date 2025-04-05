@@ -7,6 +7,7 @@ import (
 	"github.com/jym/mywebook/internal/repository/dao"
 	"github.com/jym/mywebook/internal/service"
 	"github.com/jym/mywebook/internal/web"
+	"github.com/jym/mywebook/internal/web/middlewares"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"strings"
@@ -24,7 +25,7 @@ func main() {
 		// 允许的 HTTP 头部（CORS中的Access-Control-Allow-Headers）
 		AllowHeaders: []string{"Origin"},
 		// 暴露的 HTTP 头部（CORS中的Access-Control-Expose-Headers）
-		ExposeHeaders: []string{"Content-Length"},
+		ExposeHeaders: []string{"Content-Length", "x-jwt-token"},
 		// 是否允许携带身份凭证（CORS中的Access-Control-Allow-Credentials）
 		AllowCredentials: true,
 		// 允许源的自定义判断函数，返回true表示允许，false表示不允许
@@ -39,7 +40,7 @@ func main() {
 		// 用于缓存预检请求结果的最大时间（CORS中的Access-Control-Max-Age）
 		MaxAge: 12 * time.Hour,
 	}))
-
+	r.Use(middlewares.NewLoginMiddlewareBuilder().IgnorePath("/user/login").IgnorePath("/user/signup").Build())
 	//依赖注入  解耦
 	db, err := gorm.Open(mysql.Open("root:root@tcp(47.120.51.5:13316)/webook"))
 	if err != nil {
