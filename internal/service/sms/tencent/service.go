@@ -11,7 +11,9 @@ import (
 type Service struct {
 	appId    *string
 	signName *string
-	client   *sms.Client
+	//client:=sms.NewClient(common.NewCredential(SecretId,SecretKey))
+	//client注入的时候需要传入腾讯云的参数SecretId和SecretKey
+	client *sms.Client
 }
 
 func (s *Service) Send(ctx context.Context, tpl string, args []string, numbers ...string) error {
