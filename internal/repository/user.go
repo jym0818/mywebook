@@ -2,23 +2,30 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"github.com/jym/mywebook/internal/domain"
 	"github.com/jym/mywebook/internal/repository/cache"
 	"github.com/jym/mywebook/internal/repository/dao"
 	"time"
 )
 
-var ErrUserDuplicateEmail = dao.ErrUserDuplicateEmail
+var ErrUserDuplicateEmail = dao.ErrUserDuplicate
 var ErrUserNotExists = dao.ErrUserNotExists
 
 type UserRepository interface {
 	Create(ctx context.Context, user domain.User) error
 	FindByEmail(ctx context.Context, email string) (domain.User, error)
+	FindByPhone(ctx context.Context, phone string) (domain.User, error)
 }
 
 type userRepository struct {
 	dao   dao.UserDAO
 	cache cache.UserCache
+}
+
+func (repo *userRepository) FindByPhone(ctx context.Context, phone string) (domain.User, error) {
+	u, err := repo.dao.FindByPhone(ctx, phone)
+	return repo.toDomain(u), err
 }
 
 func (repo *userRepository) FindByEmail(ctx context.Context, email string) (domain.User, error) {
@@ -58,7 +65,8 @@ func (repo *userRepository) Create(ctx context.Context, user domain.User) error 
 func (repo *userRepository) toDomain(user dao.User) domain.User {
 	return domain.User{
 		Id:       user.Id,
-		Email:    user.Email,
+		Email:    user.Email.String,
+		Phone:    user.Phone.String,
 		Password: user.Password,
 		Utime:    time.UnixMilli(user.Utime),
 		CTime:    time.UnixMilli(user.Ctime),
@@ -69,7 +77,8 @@ func (repo *userRepository) toDomain(user dao.User) domain.User {
 func (repo *userRepository) toEntity(user domain.User) dao.User {
 	return dao.User{
 		Id:       user.Id,
-		Email:    user.Email,
+		Email:    sql.NullString{String: user.Email, Valid: user.Email != ""},
+		Phone:    sql.NullString{String: user.Phone, Valid: user.Phone != ""},
 		Password: user.Password,
 		Utime:    user.Utime.UnixMilli(),
 		Ctime:    user.CTime.UnixMilli(),
