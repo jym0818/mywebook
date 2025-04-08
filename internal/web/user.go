@@ -47,7 +47,7 @@ func (h *UserHandler) Login(c *gin.Context) {
 	}
 	var req Req
 	if err := c.Bind(&req); err != nil {
-		c.JSON(http.StatusOK, Result{Msg: "系统错误"})
+
 		return
 	}
 	u, err := h.svc.Login(c.Request.Context(), req.Email, req.Password)
@@ -157,7 +157,7 @@ func (h *UserHandler) SendCode(ctx *gin.Context) {
 	}
 	var req Req
 	if err := ctx.Bind(&req); err != nil {
-		ctx.JSON(http.StatusOK, Result{Msg: "系统错误"})
+
 		return
 	}
 	//参数校验
@@ -181,7 +181,7 @@ func (h *UserHandler) LoginSMS(ctx *gin.Context) {
 	}
 	var req Req
 	if err := ctx.Bind(&req); err != nil {
-		ctx.JSON(http.StatusOK, Result{Msg: "系统错误1"})
+
 		return
 	}
 	//参数校验一下
