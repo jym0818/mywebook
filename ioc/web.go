@@ -6,6 +6,7 @@ import (
 	"github.com/jym/mywebook/internal/web"
 	"github.com/jym/mywebook/internal/web/middlewares"
 	"github.com/jym/mywebook/pkg/ginx/middlewares/ratelimit"
+	ratelimit2 "github.com/jym/mywebook/pkg/ratelimit"
 	"github.com/redis/go-redis/v9"
 	"strings"
 	"time"
@@ -20,7 +21,7 @@ func InitGin(mdls []gin.HandlerFunc, userHandler *web.UserHandler) *gin.Engine {
 }
 func InitMiddlewares(cmd redis.Cmdable) []gin.HandlerFunc {
 	return []gin.HandlerFunc{
-		ratelimit.NewBuilder(cmd, time.Minute, 100).Build(),
+		ratelimit.NewBuilder(ratelimit2.NewRedisSlideWindowLimiter(cmd, time.Second, 100)).Build(),
 		cors.New(cors.Config{
 			// 允许的源地址（CORS中的Access-Control-Allow-Origin）
 			// AllowOrigins: []string{"https://foo.com"},
