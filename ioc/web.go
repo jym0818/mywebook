@@ -12,11 +12,11 @@ import (
 	"time"
 )
 
-func InitGin(mdls []gin.HandlerFunc, userHandler *web.UserHandler) *gin.Engine {
+func InitGin(mdls []gin.HandlerFunc, userHandler *web.UserHandler, OAuth2WechatHandler *web.OAuth2WechatHandler) *gin.Engine {
 	r := gin.Default()
 	r.Use(mdls...)
 	userHandler.RegisterRouters(r)
-
+	OAuth2WechatHandler.RegisterRouters(r)
 	return r
 }
 func InitMiddlewares(cmd redis.Cmdable) []gin.HandlerFunc {
@@ -48,7 +48,7 @@ func InitMiddlewares(cmd redis.Cmdable) []gin.HandlerFunc {
 		}),
 		middlewares.NewLoginMiddlewareBuilder().
 			IgnorePath("/user/login").IgnorePath("/user/signup").IgnorePath("/user/sms/send_code").
-			IgnorePath("/user/sms/login_sms").
+			IgnorePath("/user/sms/login_sms").IgnorePath("/oauth2/wechat/authurl").IgnorePath("/oauth2/wechat/callback").
 			Build(),
 	}
 

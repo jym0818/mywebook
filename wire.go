@@ -37,6 +37,8 @@ func InitWeb() *gin.Engine {
 		ioc.InitMiddlewares,
 		UserService,
 		CodeService,
+		ioc.InitWechat,
+		web.NewOAuth2WechatHandler,
 	)
 	return new(gin.Engine)
 }
