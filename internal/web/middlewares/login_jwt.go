@@ -5,8 +5,6 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/jym/mywebook/internal/web"
 	"net/http"
-	"strings"
-	"time"
 )
 
 type LoginMiddlewareBuilder struct {
@@ -27,19 +25,10 @@ func (m *LoginMiddlewareBuilder) Build() gin.HandlerFunc {
 				return
 			}
 		}
-		tokenStr := c.GetHeader("Authorization")
-		if tokenStr == "" {
-			c.AbortWithStatus(http.StatusUnauthorized)
-		}
-		sges := strings.SplitN(tokenStr, " ", 2)
-		//传的格式错误，瞎几把传的，相当于没登陆
-		if len(sges) != 2 {
-			c.AbortWithStatus(http.StatusUnauthorized)
-			return
-		}
+		tokenStr := web.ExtractToken(c)
 		var claims web.UserClaims
-		token, err := jwt.ParseWithClaims(sges[1], &claims, func(token *jwt.Token) (interface{}, error) {
-			return []byte("sDKU8mor4FhrCDsFmmMYifqYb8u2X4c7"), nil
+		token, err := jwt.ParseWithClaims(tokenStr, &claims, func(token *jwt.Token) (interface{}, error) {
+			return []byte("95osj3fUD7fo0mlYdDbncXz4VD2igvfx"), nil
 		})
 		if err != nil {
 			c.AbortWithStatus(http.StatusUnauthorized)
@@ -56,16 +45,7 @@ func (m *LoginMiddlewareBuilder) Build() gin.HandlerFunc {
 			c.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
-
-		//刷新登录
-		if claims.ExpiresAt.Time.Sub(time.Now()) < 45*time.Second {
-			claims.ExpiresAt = jwt.NewNumericDate(time.Now().Add(time.Minute))
-			tokenStr, err = token.SignedString([]byte("sDKU8mor4FhrCDsFmmMYifqYb8u2X4c7"))
-			if err != nil {
-			}
-			c.Header("x-jwt-token", tokenStr)
-		}
-
+		
 		c.Set("claims", claims)
 	}
 }

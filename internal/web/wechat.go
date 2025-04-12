@@ -21,9 +21,10 @@ type OAuth2WechatHandler struct {
 
 func NewOAuth2WechatHandler(svc wechat.Service, userSvc service.UserService) *OAuth2WechatHandler {
 	return &OAuth2WechatHandler{
-		svc:      svc,
-		userSvc:  userSvc,
-		stateKey: []byte("95osj3fUD7foxmlYdDbncXz4VD2igvf1"),
+		svc:        svc,
+		userSvc:    userSvc,
+		stateKey:   []byte("95osj3fUD7foxmlYdDbncXz4VD2igvf1"),
+		jwtHandler: NewJwtHandler(),
 	}
 }
 func (h *OAuth2WechatHandler) RegisterRouters(s *gin.Engine) {
@@ -84,6 +85,14 @@ func (h *OAuth2WechatHandler) Callback(ctx *gin.Context) {
 	}
 	//jwt保持登录--把公共jwt提取出来
 	err = h.setJWT(ctx, user.Id)
+	if err != nil {
+		ctx.JSON(http.StatusOK, Result{
+			Msg: "系统错误",
+		})
+		return
+	}
+
+	err = h.setRefreshJWT(ctx, user.Id)
 	if err != nil {
 		ctx.JSON(http.StatusOK, Result{
 			Msg: "系统错误",
