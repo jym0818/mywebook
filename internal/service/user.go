@@ -15,6 +15,7 @@ type UserService interface {
 	Signup(ctx context.Context, user domain.User) error
 	Login(ctx context.Context, email string, password string) (domain.User, error)
 	FindOrCreate(ctx context.Context, phone string) (domain.User, error)
+	FindOrCreateByWechat(ctx context.Context, info domain.WechatInfo) (domain.User, error)
 }
 
 type userService struct {
@@ -36,6 +37,24 @@ func (u *userService) FindOrCreate(ctx context.Context, phone string) (domain.Us
 		return user, err
 	}
 	return u.repo.FindByPhone(ctx, phone)
+
+}
+
+func (u *userService) FindOrCreateByWechat(ctx context.Context, info domain.WechatInfo) (domain.User, error) {
+	//先去查找
+	user, err := u.repo.FindByWechat(ctx, info.OpenID)
+	//err不为找不到
+	if err != repository.ErrUserNotExists {
+		return user, err
+	}
+	user = domain.User{
+		WechatInfo: domain.WechatInfo{OpenID: info.OpenID, UnionID: info.UnionID},
+	}
+	err = u.repo.Create(ctx, user)
+	if err != repository.ErrUserDuplicateEmail {
+		return user, err
+	}
+	return u.repo.FindByWechat(ctx, info.OpenID)
 
 }
 
