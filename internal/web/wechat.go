@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jym/mywebook/internal/service"
 	"github.com/jym/mywebook/internal/service/oauth2/wechat"
+	ijwt "github.com/jym/mywebook/internal/web/jwt"
 	"net/http"
 	"time"
 )
@@ -15,16 +16,16 @@ import (
 type OAuth2WechatHandler struct {
 	svc     wechat.Service
 	userSvc service.UserService
-	jwtHandler
+	ijwt.Handler
 	stateKey []byte
 }
 
-func NewOAuth2WechatHandler(svc wechat.Service, userSvc service.UserService) *OAuth2WechatHandler {
+func NewOAuth2WechatHandler(svc wechat.Service, userSvc service.UserService, jwtHdl ijwt.Handler) *OAuth2WechatHandler {
 	return &OAuth2WechatHandler{
-		svc:        svc,
-		userSvc:    userSvc,
-		stateKey:   []byte("95osj3fUD7foxmlYdDbncXz4VD2igvf1"),
-		jwtHandler: NewJwtHandler(),
+		svc:      svc,
+		userSvc:  userSvc,
+		stateKey: []byte("95osj3fUD7foxmlYdDbncXz4VD2igvf1"),
+		Handler:  jwtHdl,
 	}
 }
 func (h *OAuth2WechatHandler) RegisterRouters(s *gin.Engine) {
@@ -84,7 +85,7 @@ func (h *OAuth2WechatHandler) Callback(ctx *gin.Context) {
 		return
 	}
 	//jwt保持登录--把公共jwt提取出来
-	err = h.setLoginJWT(ctx, user.Id)
+	err = h.SetLoginToken(ctx, user.Id)
 	if err != nil {
 		ctx.JSON(http.StatusOK, Result{
 			Msg: "系统错误",

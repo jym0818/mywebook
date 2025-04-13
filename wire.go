@@ -10,6 +10,7 @@ import (
 	"github.com/jym/mywebook/internal/repository/dao"
 	"github.com/jym/mywebook/internal/service"
 	"github.com/jym/mywebook/internal/web"
+	ijwt "github.com/jym/mywebook/internal/web/jwt"
 	"github.com/jym/mywebook/ioc"
 )
 
@@ -39,6 +40,7 @@ func InitWeb() *gin.Engine {
 		CodeService,
 		ioc.InitWechat,
 		web.NewOAuth2WechatHandler,
+		ijwt.NewRedisJwt,
 	)
 	return new(gin.Engine)
 }
