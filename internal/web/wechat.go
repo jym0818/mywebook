@@ -84,7 +84,7 @@ func (h *OAuth2WechatHandler) Callback(ctx *gin.Context) {
 		return
 	}
 	//jwt保持登录--把公共jwt提取出来
-	err = h.setJWT(ctx, user.Id)
+	err = h.setLoginJWT(ctx, user.Id)
 	if err != nil {
 		ctx.JSON(http.StatusOK, Result{
 			Msg: "系统错误",
@@ -92,13 +92,6 @@ func (h *OAuth2WechatHandler) Callback(ctx *gin.Context) {
 		return
 	}
 
-	err = h.setRefreshJWT(ctx, user.Id)
-	if err != nil {
-		ctx.JSON(http.StatusOK, Result{
-			Msg: "系统错误",
-		})
-		return
-	}
 	ctx.JSON(http.StatusOK, Result{
 		Msg: "ok",
 	})

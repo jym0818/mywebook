@@ -46,7 +46,7 @@ func InitMiddlewares(cmd redis.Cmdable) []gin.HandlerFunc {
 			// 用于缓存预检请求结果的最大时间（CORS中的Access-Control-Max-Age）
 			MaxAge: 12 * time.Hour,
 		}),
-		middlewares.NewLoginMiddlewareBuilder().
+		middlewares.NewLoginMiddlewareBuilder(cmd).
 			IgnorePath("/user/login").IgnorePath("/user/signup").IgnorePath("/user/sms/send_code").
 			IgnorePath("/user/sms/login_sms").IgnorePath("/oauth2/wechat/authurl").IgnorePath("/oauth2/wechat/callback").
 			IgnorePath("/user/refresh_token").

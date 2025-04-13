@@ -1,12 +1,15 @@
 package web
 
 import (
+	"fmt"
 	regexp "github.com/dlclark/regexp2"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/jym/mywebook/internal/domain"
 	"github.com/jym/mywebook/internal/service"
+	"github.com/redis/go-redis/v9"
 	"net/http"
+	"time"
 )
 
 const emailRegexPattern = "^\\w+([-+.]\\w+)*@\\w+([-.]\\w+)*\\.\\w+([-.]\\w+)*$"
@@ -20,15 +23,17 @@ type UserHandler struct {
 	svc           service.UserService
 	codeSvc       service.CodeService
 	jwtHandler
+	cmd redis.Cmdable
 }
 
-func NewUserHandler(svc service.UserService, codeSvc service.CodeService) *UserHandler {
+func NewUserHandler(svc service.UserService, codeSvc service.CodeService, cmd redis.Cmdable) *UserHandler {
 	return &UserHandler{
 		emailRegex:    regexp.MustCompile(emailRegexPattern, regexp.None),
 		passwordRegex: regexp.MustCompile(passwordRegexPattern, regexp.None),
 		svc:           svc,
 		codeSvc:       codeSvc,
 		jwtHandler:    NewJwtHandler(),
+		cmd:           cmd,
 	}
 }
 
@@ -40,6 +45,7 @@ func (h *UserHandler) RegisterRouters(s *gin.Engine) {
 	ug.POST("/sms/send_code", h.SendCode)
 	ug.POST("/sms/login_sms", h.LoginSMS)
 	ug.POST("/refresh_token", h.RefreshToken)
+	ug.POST("/logout", h.Logout)
 }
 
 func (h *UserHandler) Login(c *gin.Context) {
@@ -63,11 +69,7 @@ func (h *UserHandler) Login(c *gin.Context) {
 		return
 	}
 	//保持登录状态
-	if err := h.setJWT(c, u.Id); err != nil {
-		c.JSON(http.StatusOK, Result{Msg: "系统错误"})
-		return
-	}
-	if err := h.setRefreshJWT(c, u.Id); err != nil {
+	if err := h.setLoginJWT(c, u.Id); err != nil {
 		c.JSON(http.StatusOK, Result{Msg: "系统错误"})
 		return
 	}
@@ -197,19 +199,16 @@ func (h *UserHandler) LoginSMS(ctx *gin.Context) {
 		return
 	}
 	//jwt
-	if err := h.setJWT(ctx, u.Id); err != nil {
+	if err := h.setLoginJWT(ctx, u.Id); err != nil {
 		ctx.JSON(http.StatusOK, Result{Msg: "系统错误4"})
 		return
 	}
 
-	if err := h.setRefreshJWT(ctx, u.Id); err != nil {
-		ctx.JSON(http.StatusOK, Result{Msg: "系统错误4"})
-		return
-	}
 	ctx.JSON(http.StatusOK, Result{Data: u})
 
 }
 func (h *UserHandler) RefreshToken(ctx *gin.Context) {
+
 	tokenStr := ExtractToken(ctx)
 	var claims RefreshClaims
 	token, err := jwt.ParseWithClaims(tokenStr, &claims, func(token *jwt.Token) (interface{}, error) {
@@ -219,7 +218,14 @@ func (h *UserHandler) RefreshToken(ctx *gin.Context) {
 		ctx.AbortWithStatus(http.StatusUnauthorized)
 		return
 	}
-	err = h.setJWT(ctx, claims.Uid)
+	cnt, err := h.cmd.Exists(ctx, fmt.Sprintf("user:ssid:%s", claims.Ssid)).Result()
+	if err != nil || cnt > 0 {
+		//要么有问题，要么退出登录
+		ctx.AbortWithStatus(http.StatusUnauthorized)
+		return
+	}
+
+	err = h.setJWT(ctx, claims.Uid, claims.Ssid)
 	if err != nil {
 		ctx.AbortWithStatus(http.StatusUnauthorized)
 		return
@@ -228,4 +234,19 @@ func (h *UserHandler) RefreshToken(ctx *gin.Context) {
 		Msg: "刷新成功",
 	})
 
+}
+
+func (h *UserHandler) Logout(ctx *gin.Context) {
+	claims := ctx.MustGet("claims").(UserClaims)
+	err := h.cmd.Set(ctx, fmt.Sprintf("user:ssid:%s", claims.Ssid), "true", time.Hour*24*7).Err()
+	if err != nil {
+		ctx.JSON(http.StatusOK, Result{
+			Msg: "退出登录失败",
+		})
+	}
+	ctx.Header("x-jwt-token", "")
+	ctx.Header("x-refresh-refresh", "")
+	ctx.JSON(http.StatusOK, Result{
+		Msg: "退出登录成功",
+	})
 }
