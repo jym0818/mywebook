@@ -8,8 +8,8 @@ import (
 	"github.com/jym/mywebook/internal/domain"
 	"github.com/jym/mywebook/internal/service"
 	ijwt "github.com/jym/mywebook/internal/web/jwt"
+	"github.com/jym/mywebook/pkg/logger"
 	"github.com/redis/go-redis/v9"
-	"go.uber.org/zap"
 	"net/http"
 )
 
@@ -25,10 +25,10 @@ type UserHandler struct {
 	codeSvc       service.CodeService
 	ijwt.Handler
 	cmd redis.Cmdable
-	l   *zap.Logger
+	l   *logger.ZapLogger
 }
 
-func NewUserHandler(svc service.UserService, codeSvc service.CodeService, cmd redis.Cmdable, jwtHdl ijwt.Handler, l *zap.Logger) *UserHandler {
+func NewUserHandler(svc service.UserService, codeSvc service.CodeService, cmd redis.Cmdable, jwtHdl ijwt.Handler, l *logger.ZapLogger) *UserHandler {
 	return &UserHandler{
 		emailRegex:    regexp.MustCompile(emailRegexPattern, regexp.None),
 		passwordRegex: regexp.MustCompile(passwordRegexPattern, regexp.None),
@@ -188,7 +188,7 @@ func (h *UserHandler) LoginSMS(ctx *gin.Context) {
 		return
 	}
 	if !ok {
-		h.l.Error("验证码错误", zap.String("phone", req.Phone))
+		h.l.Error("验证码错误", logger.String("phone", req.Phone))
 		ctx.JSON(http.StatusOK, Result{
 			Code: 4,
 			Msg:  "验证码有误",
