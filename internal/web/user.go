@@ -9,6 +9,7 @@ import (
 	"github.com/jym/mywebook/internal/service"
 	ijwt "github.com/jym/mywebook/internal/web/jwt"
 	"github.com/redis/go-redis/v9"
+	"go.uber.org/zap"
 	"net/http"
 )
 
@@ -181,6 +182,7 @@ func (h *UserHandler) LoginSMS(ctx *gin.Context) {
 	//校验验证码是否正确
 	ok, err := h.codeSvc.Verify(ctx, biz, req.Phone, req.Code)
 	if err != nil {
+		zap.L().Error("登录校验验证码错误", zap.Error(err))
 		ctx.JSON(http.StatusOK, Result{Msg: err.Error()})
 		return
 	}
