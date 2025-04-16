@@ -4,16 +4,55 @@ import (
 	"context"
 	"fmt"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 	"time"
 )
 
 type ArticleDAO interface {
 	Insert(ctx context.Context, art Article) (int64, error)
 	UpdateById(ctx context.Context, art Article) error
+	Sync(ctx context.Context, art Article) (int64, error)
+	Upsert(ctx context.Context, article PublishedArticle) error
 }
 
 type articleDAO struct {
 	db *gorm.DB
+}
+
+func (dao *articleDAO) Upsert(ctx context.Context, article PublishedArticle) error {
+	now := time.Now().UnixMilli()
+	article.Ctime = now
+	article.Utime = now
+	err := dao.db.WithContext(ctx).Clauses(clause.OnConflict{
+		DoUpdates: clause.Assignments(map[string]interface{}{
+			"title":   article.Title,
+			"content": article.Content,
+			"utime":   article.Utime,
+		}),
+	}).Create(&article).Error
+	return err
+}
+
+func (dao *articleDAO) Sync(ctx context.Context, art Article) (int64, error) {
+	var (
+		id = art.Id
+	)
+	err := dao.db.Transaction(func(tx *gorm.DB) error {
+		var err error
+		txDAO := NewarticleDAO(tx)
+		if id > 0 {
+			err = txDAO.UpdateById(ctx, art)
+		} else {
+			id, err = txDAO.Insert(ctx, art)
+
+		}
+		if err != nil {
+			return err
+		}
+		art.Id = id
+		return txDAO.Upsert(ctx, PublishedArticle{Article: art})
+	})
+	return id, err
 }
 
 func (dao *articleDAO) UpdateById(ctx context.Context, art Article) error {
@@ -71,4 +110,8 @@ type Article struct {
 	//Ctime    int64 `gorm:"index=aid_ctime"`
 	Ctime int64
 	Utime int64
+}
+
+type PublishedArticle struct {
+	Article
 }

@@ -9,10 +9,15 @@ import (
 type ArticleRepository interface {
 	Create(ctx context.Context, article domain.Article) (int64, error)
 	Update(ctx context.Context, article domain.Article) error
+	Sync(ctx context.Context, art domain.Article) (int64, error)
 }
 
 type articleRepository struct {
 	dao dao.ArticleDAO
+}
+
+func (repo *articleRepository) Sync(ctx context.Context, art domain.Article) (int64, error) {
+	return repo.dao.Sync(ctx, repo.toEntity(art))
 }
 
 func (repo *articleRepository) Update(ctx context.Context, article domain.Article) error {
