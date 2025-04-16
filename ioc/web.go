@@ -13,11 +13,12 @@ import (
 	"time"
 )
 
-func InitGin(mdls []gin.HandlerFunc, userHandler *web.UserHandler, OAuth2WechatHandler *web.OAuth2WechatHandler) *gin.Engine {
+func InitGin(mdls []gin.HandlerFunc, userHandler *web.UserHandler, OAuth2WechatHandler *web.OAuth2WechatHandler, articleHdl *web.ArticleHandler) *gin.Engine {
 	r := gin.Default()
 	r.Use(mdls...)
 	userHandler.RegisterRouters(r)
 	OAuth2WechatHandler.RegisterRouters(r)
+	articleHdl.RegisterRouters(r)
 	return r
 }
 func InitMiddlewares(cmd redis.Cmdable, jwtHdl ijwt.Handler) []gin.HandlerFunc {

@@ -29,6 +29,12 @@ var CodeService = wire.NewSet(
 	service.NewcodeService,
 )
 
+var ArticleService = wire.NewSet(
+	dao.NewarticleDAO,
+	repository.NewarticleRepository,
+	service.NewarticleService,
+)
+
 func InitWeb() *gin.Engine {
 	wire.Build(
 		ioc.InitDB,
@@ -42,6 +48,8 @@ func InitWeb() *gin.Engine {
 		ioc.InitWechat,
 		web.NewOAuth2WechatHandler,
 		ijwt.NewRedisJwt,
+		ArticleService,
+		web.NewArticleHandler,
 	)
 	return new(gin.Engine)
 }

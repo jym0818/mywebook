@@ -37,7 +37,11 @@ func InitWeb() *gin.Engine {
 	userHandler := web.NewUserHandler(userService, codeService, cmdable, handler, zapLogger)
 	wechatService := ioc.InitWechat()
 	oAuth2WechatHandler := web.NewOAuth2WechatHandler(wechatService, userService, handler)
-	engine := ioc.InitGin(v, userHandler, oAuth2WechatHandler)
+	articleDAO := dao.NewarticleDAO(db)
+	articleRepository := repository.NewarticleRepository(articleDAO)
+	articleService := service.NewarticleService(articleRepository)
+	articleHandler := web.NewArticleHandler(articleService)
+	engine := ioc.InitGin(v, userHandler, oAuth2WechatHandler, articleHandler)
 	return engine
 }
 
@@ -46,3 +50,5 @@ func InitWeb() *gin.Engine {
 var UserService = wire.NewSet(dao.NewuserDAO, cache.NewRedisUserCache, repository.NewuserRepository, service.NewuserService, web.NewUserHandler)
 
 var CodeService = wire.NewSet(cache.NewRedisCodeCache, repository.NewcodeRepository, service.NewcodeService)
+
+var ArticleService = wire.NewSet(dao.NewarticleDAO, repository.NewarticleRepository, service.NewarticleService)
