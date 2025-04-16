@@ -13,10 +13,31 @@ type ArticleDAO interface {
 	UpdateById(ctx context.Context, art Article) error
 	Sync(ctx context.Context, art Article) (int64, error)
 	Upsert(ctx context.Context, article PublishedArticle) error
+	SyncStatus(ctx context.Context, id int64, uid int64, status uint8) error
 }
 
 type articleDAO struct {
 	db *gorm.DB
+}
+
+func (dao *articleDAO) SyncStatus(ctx context.Context, id int64, uid int64, status uint8) error {
+	now := time.Now().UnixMilli()
+	return dao.db.Transaction(func(tx *gorm.DB) error {
+		res := tx.Model(&Article{}).Where("id = ? AND author_id", id, uid).Updates(map[string]interface{}{
+			"status": status,
+			"utime":  now,
+		})
+		if res.Error != nil {
+			return res.Error
+		}
+		if res.RowsAffected == 0 {
+			return fmt.Errorf("可能有人在搞你，误操作非自己的文章, uid: %d, aid: %d", uid, id)
+		}
+		return tx.Model(&PublishedArticle{}).Where("id = ?", id).Updates(map[string]interface{}{
+			"status": status,
+			"utime":  now,
+		}).Error
+	})
 }
 
 func (dao *articleDAO) Upsert(ctx context.Context, article PublishedArticle) error {
@@ -28,6 +49,7 @@ func (dao *articleDAO) Upsert(ctx context.Context, article PublishedArticle) err
 			"title":   article.Title,
 			"content": article.Content,
 			"utime":   article.Utime,
+			"status":  article.Status,
 		}),
 	}).Create(&article).Error
 	return err
@@ -62,6 +84,7 @@ func (dao *articleDAO) UpdateById(ctx context.Context, art Article) error {
 		"title":   art.Title,
 		"content": art.Content,
 		"utime":   art.Utime,
+		"status":  art.Status,
 	})
 	if res.Error != nil {
 		return res.Error
@@ -108,8 +131,9 @@ type Article struct {
 	AuthorId int64 `gorm:"index"`
 	//AuthorId int64 `gorm:"index=aid_ctime"`
 	//Ctime    int64 `gorm:"index=aid_ctime"`
-	Ctime int64
-	Utime int64
+	Ctime  int64
+	Utime  int64
+	Status uint8
 }
 
 type PublishedArticle struct {
