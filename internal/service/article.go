@@ -21,5 +21,9 @@ func NewarticleService(repo repository.ArticleRepository) ArticleService {
 }
 
 func (svc *articleService) Save(ctx context.Context, article domain.Article) (int64, error) {
-	return svc.repo.Save(ctx, article)
+	if article.Id > 0 {
+		err := svc.repo.Update(ctx, article)
+		return article.Id, err
+	}
+	return svc.repo.Create(ctx, article)
 }

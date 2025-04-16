@@ -25,6 +25,7 @@ func NewArticleHandler(svc service.ArticleService) *ArticleHandler {
 
 func (h *ArticleHandler) Edit(c *gin.Context) {
 	type Req struct {
+		Id      int64  `json:"id"`
 		Title   string `json:"title"`
 		Content string `json:"content"`
 	}
@@ -38,6 +39,7 @@ func (h *ArticleHandler) Edit(c *gin.Context) {
 	id, err := h.svc.Save(c.Request.Context(), domain.Article{
 		Content: req.Content,
 		Title:   req.Title,
+		Id:      req.Id,
 		Author: domain.Author{
 			Id: claims.Uid,
 		},
@@ -47,6 +49,7 @@ func (h *ArticleHandler) Edit(c *gin.Context) {
 			Code: 5,
 			Msg:  "系统错误",
 		})
+		return
 	}
 
 	c.JSON(http.StatusOK, Result{
