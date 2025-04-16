@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	initLogger()
+	
 	initViper()
 	r := InitWeb()
 	r.Run(":8080")

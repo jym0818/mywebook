@@ -36,6 +36,7 @@ func InitWeb() *gin.Engine {
 		ioc.InitSMS,
 		ioc.InitGin,
 		ioc.InitMiddlewares,
+		ioc.InitLogger,
 		UserService,
 		CodeService,
 		ioc.InitWechat,

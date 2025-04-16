@@ -25,9 +25,10 @@ type UserHandler struct {
 	codeSvc       service.CodeService
 	ijwt.Handler
 	cmd redis.Cmdable
+	l   *zap.Logger
 }
 
-func NewUserHandler(svc service.UserService, codeSvc service.CodeService, cmd redis.Cmdable, jwtHdl ijwt.Handler) *UserHandler {
+func NewUserHandler(svc service.UserService, codeSvc service.CodeService, cmd redis.Cmdable, jwtHdl ijwt.Handler, l *zap.Logger) *UserHandler {
 	return &UserHandler{
 		emailRegex:    regexp.MustCompile(emailRegexPattern, regexp.None),
 		passwordRegex: regexp.MustCompile(passwordRegexPattern, regexp.None),
@@ -35,6 +36,7 @@ func NewUserHandler(svc service.UserService, codeSvc service.CodeService, cmd re
 		codeSvc:       codeSvc,
 		Handler:       jwtHdl,
 		cmd:           cmd,
+		l:             l,
 	}
 }
 
@@ -182,11 +184,11 @@ func (h *UserHandler) LoginSMS(ctx *gin.Context) {
 	//校验验证码是否正确
 	ok, err := h.codeSvc.Verify(ctx, biz, req.Phone, req.Code)
 	if err != nil {
-		zap.L().Error("登录校验验证码错误", zap.Error(err))
 		ctx.JSON(http.StatusOK, Result{Msg: err.Error()})
 		return
 	}
 	if !ok {
+		h.l.Error("验证码错误", zap.String("phone", req.Phone))
 		ctx.JSON(http.StatusOK, Result{
 			Code: 4,
 			Msg:  "验证码有误",
