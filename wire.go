@@ -33,6 +33,7 @@ var ArticleService = wire.NewSet(
 	dao.NewarticleDAO,
 	repository.NewarticleRepository,
 	service.NewarticleService,
+	cache.NewRedisArticle,
 )
 
 func InitWeb() *gin.Engine {
