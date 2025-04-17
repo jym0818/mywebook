@@ -26,6 +26,7 @@ func (h *ArticleHandler) RegisterRouters(s *gin.Engine) {
 	pub := g.Group("/pub")
 	//pub.GET("/pub", a.PubList)
 	pub.GET("/:id", h.PubDetail)
+	pub.POST("/like", h.Like)
 }
 
 func NewArticleHandler(svc service.ArticleService, intrSvc service.InteractiveService) *ArticleHandler {
@@ -229,4 +230,27 @@ func (h *ArticleHandler) PubDetail(ctx *gin.Context) {
 			Utime:      art.Utime.Format(time.DateTime),
 		},
 	})
+}
+
+func (h *ArticleHandler) Like(ctx *gin.Context) {
+	var req LikeReq
+	if err := ctx.Bind(&req); err != nil {
+		return
+	}
+	claims := ctx.MustGet("claims").(ijwt.UserClaims)
+	var err error
+	if req.Like {
+		err = h.intrSvc.Like(ctx.Request.Context(), h.biz, req.Id, claims.Uid)
+	} else {
+		err = h.intrSvc.CancelLike(ctx.Request.Context(), h.biz, req.Id, claims.Uid)
+	}
+	if err != nil {
+		ctx.JSON(http.StatusOK, Result{
+			Msg: "系统错误",
+		})
+	}
+	ctx.JSON(http.StatusOK, Result{
+		Msg: "OK",
+	})
+
 }

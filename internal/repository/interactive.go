@@ -8,11 +8,30 @@ import (
 
 type InteractiveRepository interface {
 	IncrReadCnt(ctx context.Context, biz string, id int64) error
+	IncrLike(ctx context.Context, biz string, id int64, uid int64) error
+	DecrLike(ctx context.Context, biz string, id int64, uid int64) error
 }
 
 type interactiveRepository struct {
 	dao   dao.InteractiveDAO
 	cache cache.InteractiveCache
+}
+
+func (repo *interactiveRepository) DecrLike(ctx context.Context, biz string, id int64, uid int64) error {
+	err := repo.dao.DeleteLikeInfo(ctx, biz, id, uid)
+	if err != nil {
+		return err
+	}
+	return repo.cache.DecrLikeCntIfPresent(ctx, biz, id)
+}
+
+func (repo *interactiveRepository) IncrLike(ctx context.Context, biz string, id int64, uid int64) error {
+	err := repo.dao.InsertLikeInfo(ctx, biz, id, uid)
+	if err != nil {
+		return err
+	}
+	//缓存
+	return repo.cache.IncrLikeCntIfPresent(ctx, biz, id)
 }
 
 func (repo *interactiveRepository) IncrReadCnt(ctx context.Context, biz string, id int64) error {

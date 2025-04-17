@@ -23,11 +23,20 @@ type InteractiveCache interface {
 
 	// IncrReadCntIfPresent 如果在缓存中有对应的数据，就 +1
 	IncrReadCntIfPresent(ctx context.Context, biz string, bizId int64) error
+	IncrLikeCntIfPresent(ctx context.Context, biz string, bizId int64) error
+	DecrLikeCntIfPresent(ctx context.Context, biz string, bizId int64) error
 }
 
 type RedisInteractiveCache struct {
 	client     redis.Cmdable
 	expiration time.Duration
+}
+
+func (r *RedisInteractiveCache) IncrLikeCntIfPresent(ctx context.Context, biz string, bizId int64) error {
+	return r.client.Eval(ctx, luaIncrCnt, []string{r.key(biz, bizId)}, fieldLikeCnt, 1).Err()
+}
+func (r *RedisInteractiveCache) DecrLikeCntIfPresent(ctx context.Context, biz string, bizId int64) error {
+	return r.client.Eval(ctx, luaIncrCnt, []string{r.key(biz, bizId)}, fieldLikeCnt, -1).Err()
 }
 
 func (r *RedisInteractiveCache) IncrReadCntIfPresent(ctx context.Context, biz string, bizId int64) error {
