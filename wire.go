@@ -35,6 +35,12 @@ var ArticleService = wire.NewSet(
 	service.NewarticleService,
 	cache.NewRedisArticle,
 )
+var InteractiveService = wire.NewSet(
+	dao.NewGORMInteractiveDAO,
+	repository.NewinteractiveRepository,
+	service.NewinteractiveService,
+	cache.NewRedisInteractiveCache,
+)
 
 func InitWeb() *gin.Engine {
 	wire.Build(
@@ -50,6 +56,7 @@ func InitWeb() *gin.Engine {
 		web.NewOAuth2WechatHandler,
 		ijwt.NewRedisJwt,
 		ArticleService,
+		InteractiveService,
 		web.NewArticleHandler,
 	)
 	return new(gin.Engine)

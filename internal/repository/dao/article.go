@@ -32,9 +32,7 @@ func (dao *articleDAO) GetById(ctx context.Context, id int64) (Article, error) {
 }
 func (dao *articleDAO) GetPubById(ctx context.Context, id int64) (PublishedArticle, error) {
 	var pub PublishedArticle
-	err := dao.db.WithContext(ctx).
-		Where("id = ?", id).
-		First(&pub).Error
+	err := dao.db.WithContext(ctx).Where("id = ?", id).First(&pub).Error
 	return pub, err
 }
 func (dao *articleDAO) GetByAuthor(ctx context.Context, uid int64, limit int, offset int) ([]Article, error) {

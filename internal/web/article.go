@@ -11,7 +11,9 @@ import (
 )
 
 type ArticleHandler struct {
-	svc service.ArticleService
+	svc     service.ArticleService
+	intrSvc service.InteractiveService
+	biz     string
 }
 
 func (h *ArticleHandler) RegisterRouters(s *gin.Engine) {
@@ -26,9 +28,11 @@ func (h *ArticleHandler) RegisterRouters(s *gin.Engine) {
 	pub.GET("/:id", h.PubDetail)
 }
 
-func NewArticleHandler(svc service.ArticleService) *ArticleHandler {
+func NewArticleHandler(svc service.ArticleService, intrSvc service.InteractiveService) *ArticleHandler {
 	return &ArticleHandler{
-		svc: svc,
+		svc:     svc,
+		biz:     "article",
+		intrSvc: intrSvc,
 	}
 }
 
@@ -201,11 +205,18 @@ func (h *ArticleHandler) PubDetail(ctx *gin.Context) {
 	if err != nil {
 		ctx.JSON(http.StatusOK, Result{
 			Code: 5,
-			Msg:  "系统错误",
+			Msg:  err.Error(),
 		})
 
 		return
 	}
+	go func() {
+		er := h.intrSvc.IncrReadCnt(ctx, h.biz, art.Id)
+		if er != nil {
+			//记录日志
+		}
+	}()
+
 	ctx.JSON(http.StatusOK, Result{
 		Data: ArticleVO{
 			Id:      art.Id,
