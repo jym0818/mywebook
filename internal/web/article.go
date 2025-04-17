@@ -5,6 +5,7 @@ import (
 	"github.com/jym/mywebook/internal/domain"
 	"github.com/jym/mywebook/internal/service"
 	ijwt "github.com/jym/mywebook/internal/web/jwt"
+	"golang.org/x/sync/errgroup"
 	"net/http"
 	"strconv"
 	"time"
@@ -203,7 +204,24 @@ func (h *ArticleHandler) PubDetail(ctx *gin.Context) {
 
 		return
 	}
-	art, err := h.svc.GetPublishedById(ctx.Request.Context(), id)
+	claims := ctx.MustGet("claims").(ijwt.UserClaims)
+	var (
+		eg   errgroup.Group
+		art  domain.Article
+		intr domain.Interactive
+	)
+	eg.Go(func() error {
+		var er error
+		art, er = h.svc.GetPublishedById(ctx.Request.Context(), id)
+		return er
+	})
+	eg.Go(func() error {
+		var er error
+		intr, er = h.intrSvc.Get(ctx.Request.Context(), h.biz, id, claims.Uid)
+		return er
+	})
+	err = eg.Wait()
+
 	if err != nil {
 		ctx.JSON(http.StatusOK, Result{
 			Code: 5,
@@ -229,6 +247,11 @@ func (h *ArticleHandler) PubDetail(ctx *gin.Context) {
 			AuthorName: art.Author.Name,
 			Ctime:      art.Ctime.Format(time.DateTime),
 			Utime:      art.Utime.Format(time.DateTime),
+			ReadCnt:    intr.ReadCnt,
+			LikeCnt:    intr.LikeCnt,
+			CollectCnt: intr.CollectCnt,
+			Liked:      intr.Liked,
+			Collected:  intr.Collected,
 		},
 	})
 }

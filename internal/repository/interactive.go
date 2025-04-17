@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"github.com/jym/mywebook/internal/domain"
 	"github.com/jym/mywebook/internal/repository/cache"
 	"github.com/jym/mywebook/internal/repository/dao"
 )
@@ -11,11 +12,60 @@ type InteractiveRepository interface {
 	IncrLike(ctx context.Context, biz string, id int64, uid int64) error
 	DecrLike(ctx context.Context, biz string, id int64, uid int64) error
 	AddCollectionItem(ctx context.Context, biz string, id int64, cid int64, uid int64) error
+	Get(ctx context.Context, biz string, id int64) (domain.Interactive, error)
+	Liked(ctx context.Context, biz string, id int64, uid int64) (bool, error)
+	Collected(ctx context.Context, biz string, id int64, uid int64) (bool, error)
 }
 
 type interactiveRepository struct {
 	dao   dao.InteractiveDAO
 	cache cache.InteractiveCache
+}
+
+func (repo *interactiveRepository) Get(ctx context.Context, biz string, id int64) (domain.Interactive, error) {
+	//先去缓存中查找
+	intr, err := repo.cache.Get(ctx, biz, id)
+	if err == nil {
+		return intr, nil
+	}
+	//去数据库查找
+	ie, err := repo.dao.Get(ctx, biz, id)
+	if err == nil {
+		res := domain.Interactive{
+			LikeCnt:    ie.LikeCnt,
+			ReadCnt:    ie.ReadCnt,
+			CollectCnt: ie.CollectCnt,
+		}
+		if er := repo.cache.Set(ctx, biz, id, res); er != nil {
+			//缓存设置失败，记录日志
+		}
+		return res, nil
+	}
+	return domain.Interactive{}, err
+}
+
+func (repo *interactiveRepository) Liked(ctx context.Context, biz string, id int64, uid int64) (bool, error) {
+	_, err := repo.dao.GetLikeInfo(ctx, biz, id, uid)
+	switch err {
+	case nil:
+		return true, nil
+	case dao.ErrNotFound:
+		return false, nil
+	default:
+		return false, err
+	}
+}
+
+func (repo *interactiveRepository) Collected(ctx context.Context, biz string, id int64, uid int64) (bool, error) {
+	_, err := repo.dao.GetCollectionInfo(ctx, biz, id, uid)
+	switch err {
+	case nil:
+		return true, nil
+	case dao.ErrNotFound:
+		return false, nil
+	default:
+		return false, err
+	}
 }
 
 func (repo *interactiveRepository) AddCollectionItem(ctx context.Context, biz string, id int64, cid int64, uid int64) error {

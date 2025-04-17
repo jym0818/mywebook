@@ -4,7 +4,9 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+	"github.com/jym/mywebook/internal/domain"
 	"github.com/redis/go-redis/v9"
+	"strconv"
 	"time"
 )
 
@@ -19,6 +21,8 @@ const (
 	fieldLikeCnt    = "like_cnt"
 )
 
+var ErrKeyNotExist = redis.Nil
+
 type InteractiveCache interface {
 
 	// IncrReadCntIfPresent 如果在缓存中有对应的数据，就 +1
@@ -26,11 +30,45 @@ type InteractiveCache interface {
 	IncrLikeCntIfPresent(ctx context.Context, biz string, bizId int64) error
 	DecrLikeCntIfPresent(ctx context.Context, biz string, bizId int64) error
 	IncrCollectCntIfPresent(ctx context.Context, biz string, id int64) error
+	Get(ctx context.Context, biz string, id int64) (domain.Interactive, error)
+	Set(ctx context.Context, biz string, bizId int64, intr domain.Interactive) error
 }
 
 type RedisInteractiveCache struct {
 	client     redis.Cmdable
 	expiration time.Duration
+}
+
+func (r *RedisInteractiveCache) Get(ctx context.Context, biz string, id int64) (domain.Interactive, error) {
+	data, err := r.client.HGetAll(ctx, r.key(biz, id)).Result()
+	if err != nil {
+		return domain.Interactive{}, err
+	}
+
+	if len(data) == 0 {
+		// 缓存不存在
+		return domain.Interactive{}, ErrKeyNotExist
+	}
+
+	// 理论上来说，这里不可能有 error
+	collectCnt, _ := strconv.ParseInt(data[fieldCollectCnt], 10, 64)
+	likeCnt, _ := strconv.ParseInt(data[fieldLikeCnt], 10, 64)
+	readCnt, _ := strconv.ParseInt(data[fieldReadCnt], 10, 64)
+	return domain.Interactive{
+		// 懒惰的写法
+		CollectCnt: collectCnt,
+		LikeCnt:    likeCnt,
+		ReadCnt:    readCnt,
+	}, err
+}
+
+func (r *RedisInteractiveCache) Set(ctx context.Context, biz string, bizId int64, intr domain.Interactive) error {
+	key := r.key(biz, bizId)
+	err := r.client.HMSet(ctx, key, fieldLikeCnt, intr.LikeCnt, fieldCollectCnt, intr.CollectCnt, fieldReadCnt, intr.ReadCnt).Err()
+	if err != nil {
+		return err
+	}
+	return r.client.Expire(ctx, key, time.Minute*15).Err()
 }
 
 func (r *RedisInteractiveCache) IncrLikeCntIfPresent(ctx context.Context, biz string, bizId int64) error {

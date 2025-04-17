@@ -26,6 +26,15 @@ type ArticleVO struct {
 	AuthorName string `json:"author_name"`
 	Ctime      string `json:"ctime"`
 	Utime      string `json:"utime"`
+
+	// 点赞之类的信息
+	LikeCnt    int64 `json:"likeCnt"`
+	CollectCnt int64 `json:"collectCnt"`
+	ReadCnt    int64 `json:"readCnt"`
+
+	// 个人是否点赞的信息
+	Liked     bool `json:"liked"`
+	Collected bool `json:"collected"`
 }
 
 type ListReq struct {
