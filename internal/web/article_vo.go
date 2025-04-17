@@ -2,6 +2,10 @@ package web
 
 import "github.com/jym/mywebook/internal/domain"
 
+type CollectReq struct {
+	Id  int64 `json:"id"`
+	Cid int64 `json:"cid"`
+}
 type LikeReq struct {
 	Id   int64 `json:"id"`
 	Like bool  `json:"like"`

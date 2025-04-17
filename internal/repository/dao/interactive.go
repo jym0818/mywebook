@@ -11,9 +11,34 @@ type InteractiveDAO interface {
 	IncrReadCnt(ctx context.Context, biz string, bizId int64) error
 	InsertLikeInfo(ctx context.Context, biz string, id int64, uid int64) error
 	DeleteLikeInfo(ctx context.Context, biz string, id int64, uid int64) error
+	InsertCollectionBiz(ctx context.Context, cb UserCollectionBiz) error
 }
 type GORMInteractiveDAO struct {
 	db *gorm.DB
+}
+
+func (dao *GORMInteractiveDAO) InsertCollectionBiz(ctx context.Context, cb UserCollectionBiz) error {
+	now := time.Now().UnixMilli()
+	cb.Utime = now
+	cb.Ctime = now
+	return dao.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		err := dao.db.WithContext(ctx).Create(&cb).Error
+		if err != nil {
+			return err
+		}
+		return tx.Clauses(clause.OnConflict{
+			DoUpdates: clause.Assignments(map[string]any{
+				"like_cnt": gorm.Expr("`like_cnt`+1"),
+				"utime":    now,
+			}),
+		}).Create(&Interactive{
+			CollectCnt: 1,
+			Ctime:      now,
+			Utime:      now,
+			Biz:        cb.Biz,
+			BizId:      cb.BizId,
+		}).Error
+	})
 }
 
 func (dao *GORMInteractiveDAO) DeleteLikeInfo(ctx context.Context, biz string, id int64, uid int64) error {
@@ -112,4 +137,26 @@ type UserLikeBiz struct {
 	Status uint8
 	Ctime  int64
 	Utime  int64
+}
+type Collection struct {
+	Id   int64  `gorm:"primaryKey,autoIncrement"`
+	Name string `gorm:"type=varchar(1024)"`
+	Uid  int64  `gorm:""`
+
+	Ctime int64
+	Utime int64
+}
+
+type UserCollectionBiz struct {
+	Id int64 `gorm:"primaryKey,autoIncrement"`
+	// 收藏夹 ID
+	// 作为关联关系中的外键，我们这里需要索引
+	Cid   int64  `gorm:"index"`
+	BizId int64  `gorm:"uniqueIndex:biz_type_id_uid"`
+	Biz   string `gorm:"type:varchar(128);uniqueIndex:biz_type_id_uid"`
+	// 这算是一个冗余，因为正常来说，
+	// 只需要在 Collection 中维持住 Uid 就可以
+	Uid   int64 `gorm:"uniqueIndex:biz_type_id_uid"`
+	Ctime int64
+	Utime int64
 }

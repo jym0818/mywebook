@@ -9,9 +9,14 @@ type InteractiveService interface {
 	IncrReadCnt(ctx context.Context, biz string, bizId int64) error
 	Like(ctx context.Context, biz string, id int64, uid int64) error
 	CancelLike(ctx context.Context, biz string, id int64, uid int64) error
+	Collect(ctx context.Context, biz string, id int64, cid int64, uid int64) error
 }
 type interactiveService struct {
 	repo repository.InteractiveRepository
+}
+
+func (svc *interactiveService) Collect(ctx context.Context, biz string, id int64, cid int64, uid int64) error {
+	return svc.repo.AddCollectionItem(ctx, biz, id, cid, uid)
 }
 
 func NewinteractiveService(repo repository.InteractiveRepository) InteractiveService {

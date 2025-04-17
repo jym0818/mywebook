@@ -25,6 +25,7 @@ type InteractiveCache interface {
 	IncrReadCntIfPresent(ctx context.Context, biz string, bizId int64) error
 	IncrLikeCntIfPresent(ctx context.Context, biz string, bizId int64) error
 	DecrLikeCntIfPresent(ctx context.Context, biz string, bizId int64) error
+	IncrCollectCntIfPresent(ctx context.Context, biz string, id int64) error
 }
 
 type RedisInteractiveCache struct {
@@ -34,6 +35,10 @@ type RedisInteractiveCache struct {
 
 func (r *RedisInteractiveCache) IncrLikeCntIfPresent(ctx context.Context, biz string, bizId int64) error {
 	return r.client.Eval(ctx, luaIncrCnt, []string{r.key(biz, bizId)}, fieldLikeCnt, 1).Err()
+}
+
+func (r *RedisInteractiveCache) IncrCollectCntIfPresent(ctx context.Context, biz string, bizId int64) error {
+	return r.client.Eval(ctx, luaIncrCnt, []string{r.key(biz, bizId)}, fieldCollectCnt, 1).Err()
 }
 func (r *RedisInteractiveCache) DecrLikeCntIfPresent(ctx context.Context, biz string, bizId int64) error {
 	return r.client.Eval(ctx, luaIncrCnt, []string{r.key(biz, bizId)}, fieldLikeCnt, -1).Err()
