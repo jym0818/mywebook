@@ -44,7 +44,7 @@ func (r *RedisJwt) SetToken(ctx *gin.Context, uid int64, ssid string) error {
 		UserAgent: ctx.GetHeader("User-Agent"),
 		Ssid:      ssid,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24)),
 		},
 	})
 	tokenStr, err := token.SignedString(AccessTokenKey)

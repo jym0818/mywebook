@@ -17,6 +17,7 @@ func (h *ArticleHandler) RegisterRouters(s *gin.Engine) {
 	g.POST("/edit", h.Edit)
 	g.POST("/publish", h.Publish)
 	g.POST("/withdraw", h.Withdraw)
+	g.POST("/list", h.List)
 }
 
 func NewArticleHandler(svc service.ArticleService) *ArticleHandler {
@@ -98,21 +99,37 @@ func (h *ArticleHandler) Withdraw(c *gin.Context) {
 	})
 }
 
-type ArticleReq struct {
-	Id      int64  `json:"id"`
-	Title   string `json:"title"`
-	Content string `json:"content"`
-	Status  uint8  `json:"status"`
-}
-
-func (req ArticleReq) toDomain(uid int64) domain.Article {
-	return domain.Article{
-		Id:      req.Id,
-		Title:   req.Title,
-		Content: req.Content,
-		Author: domain.Author{
-			Id: uid,
-		},
-		Status: domain.ArticleStatus(req.Status),
+func (h *ArticleHandler) List(c *gin.Context) {
+	var req ListReq
+	if err := c.Bind(&req); err != nil {
+		return
 	}
+	claims := c.MustGet("claims").(ijwt.UserClaims)
+
+	res, err := h.svc.List(c.Request.Context(), claims.Uid, req.Limit, req.Offset)
+
+	if err != nil {
+		c.JSON(http.StatusOK, Result{
+			Code: 5,
+			Msg:  "系统错误",
+		})
+		return
+	}
+	var arts []ArticleVO
+	for _, item := range res {
+		arts = append(arts, ArticleVO{
+			Id:         item.Id,
+			Title:      item.Title,
+			Status:     item.Status.ToUint8(),
+			AuthorId:   item.Author.Id,
+			AuthorName: item.Author.Name,
+			Ctime:      item.Ctime.Format("2006-01-02 15:04:05"),
+			Utime:      item.Utime.Format("2006-01-02 15:04:05"),
+			Abstract:   item.Abstract(),
+		})
+	}
+	c.JSON(http.StatusOK, Result{
+		Msg:  "OK",
+		Data: arts,
+	})
 }
