@@ -12,10 +12,15 @@ type ArticleService interface {
 	Withdraw(c context.Context, article domain.Article) error
 	List(ctx context.Context, uid int64, limit int, offset int) ([]domain.Article, error)
 	GetById(ctx context.Context, id int64) (domain.Article, error)
+	GetPublishedById(ctx context.Context, id int64) (domain.Article, error)
 }
 
 type articleService struct {
 	repo repository.ArticleRepository
+}
+
+func (svc *articleService) GetPublishedById(ctx context.Context, id int64) (domain.Article, error) {
+	return svc.repo.GetPublishedById(ctx, id)
 }
 
 func (svc *articleService) GetById(ctx context.Context, id int64) (domain.Article, error) {

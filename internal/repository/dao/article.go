@@ -16,6 +16,7 @@ type ArticleDAO interface {
 	SyncStatus(ctx context.Context, id int64, uid int64, status uint8) error
 	GetByAuthor(ctx context.Context, uid int64, limit int, offset int) ([]Article, error)
 	GetById(ctx context.Context, id int64) (Article, error)
+	GetPubById(ctx context.Context, id int64) (PublishedArticle, error)
 }
 
 type articleDAO struct {
@@ -29,7 +30,13 @@ func (dao *articleDAO) GetById(ctx context.Context, id int64) (Article, error) {
 		First(&art).Error
 	return art, err
 }
-
+func (dao *articleDAO) GetPubById(ctx context.Context, id int64) (PublishedArticle, error) {
+	var pub PublishedArticle
+	err := dao.db.WithContext(ctx).
+		Where("id = ?", id).
+		First(&pub).Error
+	return pub, err
+}
 func (dao *articleDAO) GetByAuthor(ctx context.Context, uid int64, limit int, offset int) ([]Article, error) {
 	var arts []Article
 	err := dao.db.WithContext(ctx).Model(&Article{}).

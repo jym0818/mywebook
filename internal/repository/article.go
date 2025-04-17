@@ -15,11 +15,35 @@ type ArticleRepository interface {
 	SyncStatus(ctx context.Context, id int64, uid int64, status domain.ArticleStatus) error
 	List(ctx context.Context, uid int64, limit int, offset int) ([]domain.Article, error)
 	GetById(ctx context.Context, id int64) (domain.Article, error)
+	GetPublishedById(ctx context.Context, id int64) (domain.Article, error)
 }
 
 type articleRepository struct {
-	dao   dao.ArticleDAO
-	cache cache.ArticleCache
+	dao      dao.ArticleDAO
+	cache    cache.ArticleCache
+	userRepo UserRepository
+}
+
+func (repo *articleRepository) GetPublishedById(ctx context.Context, id int64) (domain.Article, error) {
+	art, err := repo.dao.GetPubById(ctx, id)
+	if err != nil {
+		return domain.Article{}, err
+	}
+	user, err := repo.userRepo.FindById(ctx, art.AuthorId)
+	if err != nil {
+		return domain.Article{}, err
+	}
+	res := domain.Article{
+		Id:      art.Id,
+		Title:   art.Title,
+		Status:  domain.ArticleStatus(art.Status),
+		Content: art.Content,
+		Author: domain.Author{
+			Id:   user.Id,
+			Name: user.Nickname,
+		},
+	}
+	return res, nil
 }
 
 func (repo *articleRepository) GetById(ctx context.Context, id int64) (domain.Article, error) {
@@ -112,8 +136,8 @@ func (repo *articleRepository) preCache(ctx context.Context,
 	}
 }
 
-func NewarticleRepository(dao dao.ArticleDAO, cache cache.ArticleCache) ArticleRepository {
-	return &articleRepository{dao: dao, cache: cache}
+func NewarticleRepository(dao dao.ArticleDAO, cache cache.ArticleCache, userRepo UserRepository) ArticleRepository {
+	return &articleRepository{dao: dao, cache: cache, userRepo: userRepo}
 }
 
 func (repo *articleRepository) toEntity(article domain.Article) dao.Article {

@@ -10,4 +10,5 @@ type User struct {
 	Utime      time.Time
 	CTime      time.Time
 	WechatInfo WechatInfo
+	Nickname   string
 }

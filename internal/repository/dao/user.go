@@ -74,4 +74,5 @@ type User struct {
 	Password      string
 	Utime         int64
 	Ctime         int64
+	Nickname      string
 }

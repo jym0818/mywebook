@@ -21,6 +21,9 @@ func (h *ArticleHandler) RegisterRouters(s *gin.Engine) {
 	g.POST("/withdraw", h.Withdraw)
 	g.POST("/list", h.List)
 	g.GET("/detail/:id", h.Detail)
+	pub := g.Group("/pub")
+	//pub.GET("/pub", a.PubList)
+	pub.GET("/:id", h.PubDetail)
 }
 
 func NewArticleHandler(svc service.ArticleService) *ArticleHandler {
@@ -181,4 +184,38 @@ func (h *ArticleHandler) Detail(c *gin.Context) {
 		},
 	})
 
+}
+
+func (h *ArticleHandler) PubDetail(ctx *gin.Context) {
+	idstr := ctx.Param("id")
+	id, err := strconv.ParseInt(idstr, 10, 64)
+	if err != nil {
+		ctx.JSON(http.StatusOK, Result{
+			Code: 4,
+			Msg:  "参数错误",
+		})
+
+		return
+	}
+	art, err := h.svc.GetPublishedById(ctx.Request.Context(), id)
+	if err != nil {
+		ctx.JSON(http.StatusOK, Result{
+			Code: 5,
+			Msg:  "系统错误",
+		})
+
+		return
+	}
+	ctx.JSON(http.StatusOK, Result{
+		Data: ArticleVO{
+			Id:      art.Id,
+			Title:   art.Title,
+			Status:  art.Status.ToUint8(),
+			Content: art.Content,
+			// 要把作者信息带出去
+			AuthorName: art.Author.Name,
+			Ctime:      art.Ctime.Format(time.DateTime),
+			Utime:      art.Utime.Format(time.DateTime),
+		},
+	})
 }
