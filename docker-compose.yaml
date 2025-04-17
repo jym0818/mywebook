@@ -17,7 +17,6 @@ services:
       - ALLOW_EMPTY_PASSWORD=yes  # 允许空密码（无密码访问）
     ports:
       - '6379:6379'             # 映射 Redis 默认端口
-      -
 
   kafka:
     image: 'bitnami/kafka:3.6.0'
