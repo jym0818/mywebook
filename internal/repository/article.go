@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"fmt"
 	"github.com/jym/mywebook/internal/domain"
 	"github.com/jym/mywebook/internal/repository/cache"
 	"github.com/jym/mywebook/internal/repository/dao"
@@ -54,17 +53,17 @@ func (repo *articleRepository) SyncStatus(ctx context.Context, id int64, uid int
 		if err != nil {
 			//记录日志
 		}
-	}
+	}()
 	return repo.dao.SyncStatus(ctx, id, uid, uint8(status))
 }
 
 func (repo *articleRepository) Sync(ctx context.Context, art domain.Article) (int64, error) {
 	go func() {
-		err := repo.cache.DelFirstPage(ctx, article.Author.Id)
+		err := repo.cache.DelFirstPage(ctx, art.Author.Id)
 		if err != nil {
 			//记录日志
 		}
-	}
+	}()
 	return repo.dao.Sync(ctx, repo.toEntity(art))
 }
 
@@ -74,7 +73,7 @@ func (repo *articleRepository) Update(ctx context.Context, article domain.Articl
 		if err != nil {
 			//记录日志
 		}
-	}
+	}()
 	return repo.dao.UpdateById(ctx, repo.toEntity(article))
 }
 
@@ -84,7 +83,7 @@ func (repo *articleRepository) Create(ctx context.Context, article domain.Articl
 		if err != nil {
 			//记录日志
 		}
-	}
+	}()
 	return repo.dao.Insert(ctx, repo.toEntity(article))
 }
 
