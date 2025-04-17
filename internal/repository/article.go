@@ -35,6 +35,9 @@ func (repo *articleRepository) List(ctx context.Context, uid int64, limit int, o
 	if offset == 0 && limit <= 100 {
 		data, err := repo.cache.GetFirstPage(ctx, uid)
 		if err == nil {
+			go func() {
+				repo.preCache(ctx, data)
+			}()
 			return data[:limit], nil
 		}
 	}
@@ -48,6 +51,7 @@ func (repo *articleRepository) List(ctx context.Context, uid int64, limit int, o
 	}
 	//回写缓存
 	go func() {
+		repo.preCache(ctx, arts)
 		err = repo.cache.SetFirstPage(ctx, uid, arts)
 		if err != nil {
 			//记录日志
@@ -94,6 +98,18 @@ func (repo *articleRepository) Create(ctx context.Context, article domain.Articl
 		}
 	}()
 	return repo.dao.Insert(ctx, repo.toEntity(article))
+}
+
+func (repo *articleRepository) preCache(ctx context.Context,
+	arts []domain.Article) {
+	// 1MB
+	const contentSizeThreshold = 1024 * 1024
+	if len(arts) > 0 && len(arts[0].Content) <= contentSizeThreshold {
+		// 你也可以记录日志
+		if err := repo.cache.Set(ctx, arts[0]); err != nil {
+
+		}
+	}
 }
 
 func NewarticleRepository(dao dao.ArticleDAO, cache cache.ArticleCache) ArticleRepository {
