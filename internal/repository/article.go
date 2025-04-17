@@ -14,11 +14,20 @@ type ArticleRepository interface {
 	Sync(ctx context.Context, art domain.Article) (int64, error)
 	SyncStatus(ctx context.Context, id int64, uid int64, status domain.ArticleStatus) error
 	List(ctx context.Context, uid int64, limit int, offset int) ([]domain.Article, error)
+	GetById(ctx context.Context, id int64) (domain.Article, error)
 }
 
 type articleRepository struct {
 	dao   dao.ArticleDAO
 	cache cache.ArticleCache
+}
+
+func (repo *articleRepository) GetById(ctx context.Context, id int64) (domain.Article, error) {
+	art, err := repo.dao.GetById(ctx, id)
+	if err != nil {
+		return domain.Article{}, err
+	}
+	return repo.toDomain(art), nil
 }
 
 func (repo *articleRepository) List(ctx context.Context, uid int64, limit int, offset int) ([]domain.Article, error) {
