@@ -212,7 +212,7 @@ func (h *ArticleHandler) PubDetail(ctx *gin.Context) {
 	)
 	eg.Go(func() error {
 		var er error
-		art, er = h.svc.GetPublishedById(ctx.Request.Context(), id)
+		art, er = h.svc.GetPublishedById(ctx.Request.Context(), id, claims.Uid)
 		return er
 	})
 	eg.Go(func() error {

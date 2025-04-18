@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"github.com/jym/mywebook/internal/domain"
+	"github.com/jym/mywebook/internal/events/article"
 	"github.com/jym/mywebook/internal/repository"
 )
 
@@ -12,15 +13,37 @@ type ArticleService interface {
 	Withdraw(c context.Context, article domain.Article) error
 	List(ctx context.Context, uid int64, limit int, offset int) ([]domain.Article, error)
 	GetById(ctx context.Context, id int64) (domain.Article, error)
-	GetPublishedById(ctx context.Context, id int64) (domain.Article, error)
+	GetPublishedById(ctx context.Context, id int64, uid int64) (domain.Article, error)
 }
 
 type articleService struct {
-	repo repository.ArticleRepository
+	repo     repository.ArticleRepository
+	producer article.Producer
 }
 
-func (svc *articleService) GetPublishedById(ctx context.Context, id int64) (domain.Article, error) {
-	return svc.repo.GetPublishedById(ctx, id)
+func NewarticleService(repo repository.ArticleRepository) ArticleService {
+	return &articleService{
+		repo: repo,
+	}
+}
+
+func (svc *articleService) GetPublishedById(ctx context.Context, id int64, uid int64) (domain.Article, error) {
+
+	art, err := svc.repo.GetPublishedById(ctx, id)
+	if err == nil {
+		//发送事件了也就是某人读了某篇文章
+		go func() {
+			er := svc.producer.ProduceReadEvent(ctx, article.ReadEvent{
+				Aid: id,
+				Uid: uid,
+			})
+			if er != nil {
+				//记录日志
+			}
+		}()
+	}
+	return art, err
+
 }
 
 func (svc *articleService) GetById(ctx context.Context, id int64) (domain.Article, error) {
@@ -38,12 +61,6 @@ func (svc *articleService) Withdraw(c context.Context, article domain.Article) e
 func (svc *articleService) Publish(ctx context.Context, art domain.Article) (int64, error) {
 	art.Status = domain.ArticleStatusPublished
 	return svc.repo.Sync(ctx, art)
-}
-
-func NewarticleService(repo repository.ArticleRepository) ArticleService {
-	return &articleService{
-		repo: repo,
-	}
 }
 
 func (svc *articleService) Save(ctx context.Context, article domain.Article) (int64, error) {
