@@ -6,10 +6,17 @@ import (
 )
 
 func main() {
-	
+
 	initViper()
-	r := InitWeb()
-	r.Run(":8080")
+	app := InitWeb()
+	for _, c := range app.consumers {
+		err := c.Start()
+		if err != nil {
+			panic(err)
+		}
+	}
+	server := app.web
+	server.Run(":8080")
 }
 
 func initViper() {

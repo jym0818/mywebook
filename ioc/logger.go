@@ -5,7 +5,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func InitLogger() *logger.ZapLogger {
+func InitLogger() logger.Logger {
 	log, err := zap.NewDevelopment()
 	if err != nil {
 		panic(err)

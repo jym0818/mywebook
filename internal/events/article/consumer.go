@@ -36,3 +36,11 @@ func (k *KafkaConsumer) Consume(msg *sarama.ConsumerMessage, evt ReadEvent) erro
 	defer cancel()
 	return k.repo.IncrReadCnt(ctx, "article", evt.Uid)
 }
+
+func NewKafkaConsumer(client sarama.Client, l logger.Logger, repo repository.InteractiveRepository) *KafkaConsumer {
+	return &KafkaConsumer{
+		client: client,
+		l:      l,
+		repo:   repo,
+	}
+}

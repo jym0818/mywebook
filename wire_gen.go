@@ -7,8 +7,8 @@
 package main
 
 import (
-	"github.com/gin-gonic/gin"
 	"github.com/google/wire"
+	"github.com/jym/mywebook/internal/events/article"
 	"github.com/jym/mywebook/internal/repository"
 	"github.com/jym/mywebook/internal/repository/cache"
 	"github.com/jym/mywebook/internal/repository/dao"
@@ -20,11 +20,18 @@ import (
 
 // Injectors from wire.go:
 
-func InitWeb() *gin.Engine {
-	cmdable := ioc.InitRedis()
-	handler := jwt.NewRedisJwt(cmdable)
-	v := ioc.InitMiddlewares(cmdable, handler)
+func InitWeb() *App {
+	client := ioc.InitKafka()
+	logger := ioc.InitLogger()
 	db := ioc.InitDB()
+	interactiveDAO := dao.NewGORMInteractiveDAO(db)
+	cmdable := ioc.InitRedis()
+	interactiveCache := cache.NewRedisInteractiveCache(cmdable)
+	interactiveRepository := repository.NewinteractiveRepository(interactiveDAO, interactiveCache)
+	kafkaConsumer := article.NewKafkaConsumer(client, logger, interactiveRepository)
+	v := ioc.NewConsumers(kafkaConsumer)
+	handler := jwt.NewRedisJwt(cmdable)
+	v2 := ioc.InitMiddlewares(cmdable, handler)
 	userDAO := dao.NewuserDAO(db)
 	userCache := cache.NewRedisUserCache(cmdable)
 	userRepository := repository.NewuserRepository(userDAO, userCache)
@@ -33,21 +40,23 @@ func InitWeb() *gin.Engine {
 	codeRepository := repository.NewcodeRepository(codeCache)
 	smsService := ioc.InitSMS(cmdable)
 	codeService := service.NewcodeService(codeRepository, smsService)
-	zapLogger := ioc.InitLogger()
-	userHandler := web.NewUserHandler(userService, codeService, cmdable, handler, zapLogger)
+	userHandler := web.NewUserHandler(userService, codeService, cmdable, handler, logger)
 	wechatService := ioc.InitWechat()
 	oAuth2WechatHandler := web.NewOAuth2WechatHandler(wechatService, userService, handler)
 	articleDAO := dao.NewarticleDAO(db)
 	articleCache := cache.NewRedisArticle(cmdable)
 	articleRepository := repository.NewarticleRepository(articleDAO, articleCache, userRepository)
-	articleService := service.NewarticleService(articleRepository)
-	interactiveDAO := dao.NewGORMInteractiveDAO(db)
-	interactiveCache := cache.NewRedisInteractiveCache(cmdable)
-	interactiveRepository := repository.NewinteractiveRepository(interactiveDAO, interactiveCache)
+	syncProducer := ioc.NewSyncProducer(client)
+	producer := article.NewKafkaProducer(syncProducer)
+	articleService := service.NewarticleService(articleRepository, producer)
 	interactiveService := service.NewinteractiveService(interactiveRepository)
 	articleHandler := web.NewArticleHandler(articleService, interactiveService)
-	engine := ioc.InitGin(v, userHandler, oAuth2WechatHandler, articleHandler)
-	return engine
+	engine := ioc.InitGin(v2, userHandler, oAuth2WechatHandler, articleHandler)
+	app := &App{
+		consumers: v,
+		web:       engine,
+	}
+	return app
 }
 
 // wire.go:

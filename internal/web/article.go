@@ -230,12 +230,12 @@ func (h *ArticleHandler) PubDetail(ctx *gin.Context) {
 
 		return
 	}
-	go func() {
-		er := h.intrSvc.IncrReadCnt(ctx, h.biz, art.Id)
-		if er != nil {
-			//记录日志
-		}
-	}()
+	//go func() {
+	//	er := h.intrSvc.IncrReadCnt(ctx, h.biz, art.Id)
+	//	if er != nil {
+	//		//记录日志
+	//	}
+	//}()
 
 	ctx.JSON(http.StatusOK, Result{
 		Data: ArticleVO{

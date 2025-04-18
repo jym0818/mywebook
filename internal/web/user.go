@@ -25,10 +25,10 @@ type UserHandler struct {
 	codeSvc       service.CodeService
 	ijwt.Handler
 	cmd redis.Cmdable
-	l   *logger.ZapLogger
+	l   logger.Logger
 }
 
-func NewUserHandler(svc service.UserService, codeSvc service.CodeService, cmd redis.Cmdable, jwtHdl ijwt.Handler, l *logger.ZapLogger) *UserHandler {
+func NewUserHandler(svc service.UserService, codeSvc service.CodeService, cmd redis.Cmdable, jwtHdl ijwt.Handler, l logger.Logger) *UserHandler {
 	return &UserHandler{
 		emailRegex:    regexp.MustCompile(emailRegexPattern, regexp.None),
 		passwordRegex: regexp.MustCompile(passwordRegexPattern, regexp.None),

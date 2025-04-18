@@ -21,9 +21,10 @@ type articleService struct {
 	producer article.Producer
 }
 
-func NewarticleService(repo repository.ArticleRepository) ArticleService {
+func NewarticleService(repo repository.ArticleRepository, producer article.Producer) ArticleService {
 	return &articleService{
-		repo: repo,
+		repo:     repo,
+		producer: producer,
 	}
 }
 
