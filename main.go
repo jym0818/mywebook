@@ -1,13 +1,16 @@
 package main
 
 import (
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
+	"net/http"
 )
 
 func main() {
 
 	initViper()
+	initPrometheus()
 	app := InitWeb()
 	for _, c := range app.consumers {
 		err := c.Start()
@@ -35,4 +38,10 @@ func initLogger() {
 		panic(err)
 	}
 	zap.ReplaceGlobals(logger)
+}
+func initPrometheus() {
+	go func() {
+		http.Handle("/metrics", promhttp.Handler())
+		http.ListenAndServe(":8081", nil)
+	}()
 }
