@@ -17,9 +17,26 @@ type InteractiveDAO interface {
 	GetLikeInfo(ctx context.Context, biz string, bizId, uid int64) (UserLikeBiz, error)
 	GetCollectionInfo(ctx context.Context, biz string, id int64, uid int64) (UserCollectionBiz, error)
 	Get(ctx context.Context, biz string, id int64) (Interactive, error)
+	BatchIncrReadCnt(ctx context.Context, bizs []string, ids []int64) error
 }
 type GORMInteractiveDAO struct {
 	db *gorm.DB
+}
+
+func (dao *GORMInteractiveDAO) BatchIncrReadCnt(ctx context.Context, bizs []string, ids []int64) error {
+	//为什么批量可以提升性能
+	//因为这里面只有一个事务所以提升了性能
+	return dao.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		txDAO := NewGORMInteractiveDAO(tx)
+		for i := 0; i < len(bizs); i++ {
+			err := txDAO.IncrReadCnt(ctx, bizs[i], ids[i])
+			if err != nil {
+				//可以不返回错误，即使不回滚 阅读计数失败可以接受
+				return err
+			}
+		}
+		return nil
+	})
 }
 
 func (dao *GORMInteractiveDAO) Get(ctx context.Context, biz string, id int64) (Interactive, error) {

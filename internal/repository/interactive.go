@@ -9,6 +9,7 @@ import (
 
 type InteractiveRepository interface {
 	IncrReadCnt(ctx context.Context, biz string, id int64) error
+	BatchIncrReadCnt(ctx context.Context, bizs []string, ids []int64) error
 	IncrLike(ctx context.Context, biz string, id int64, uid int64) error
 	DecrLike(ctx context.Context, biz string, id int64, uid int64) error
 	AddCollectionItem(ctx context.Context, biz string, id int64, cid int64, uid int64) error
@@ -20,6 +21,10 @@ type InteractiveRepository interface {
 type interactiveRepository struct {
 	dao   dao.InteractiveDAO
 	cache cache.InteractiveCache
+}
+
+func (repo *interactiveRepository) BatchIncrReadCnt(ctx context.Context, bizs []string, ids []int64) error {
+	return repo.dao.BatchIncrReadCnt(ctx, bizs, ids)
 }
 
 func (repo *interactiveRepository) Get(ctx context.Context, biz string, id int64) (domain.Interactive, error) {
