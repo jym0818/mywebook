@@ -6,6 +6,7 @@ import (
 	"github.com/spf13/viper"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"gorm.io/plugin/opentelemetry/tracing"
 	"gorm.io/plugin/prometheus"
 	"time"
 )
@@ -80,6 +81,13 @@ func InitDB() *gorm.DB {
 	if err != nil {
 		panic(err)
 	}
+	//tracing
+	db.Use(tracing.NewPlugin(tracing.WithDBName("webook"),
+		//不要记录metric  我们使用了prometheus
+		tracing.WithoutMetrics(),
+		//不要记录查询参数，安全需求线上不要记录
+		tracing.WithoutQueryVariables(),
+	))
 
 	return db
 }
