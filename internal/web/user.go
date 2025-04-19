@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/jym/mywebook/internal/domain"
+	"github.com/jym/mywebook/internal/errs"
 	"github.com/jym/mywebook/internal/service"
 	ijwt "github.com/jym/mywebook/internal/web/jwt"
 	"github.com/jym/mywebook/pkg/logger"
@@ -63,7 +64,10 @@ func (h *UserHandler) Login(c *gin.Context) {
 	}
 	u, err := h.svc.Login(c.Request.Context(), req.Email, req.Password)
 	if err == service.ErrInvalidUserOrPassword {
-		c.JSON(http.StatusOK, Result{Msg: "账号或者密码错误"})
+		c.JSON(http.StatusOK, Result{
+			Code: errs.UserInputValid,
+			Msg: "账号或者密码错误"
+		})
 		return
 	}
 
