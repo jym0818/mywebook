@@ -27,11 +27,24 @@ func (m *MiddlewareBuilder) Build() gin.HandlerFunc {
 		Objectives: map[float64]float64{0.5: 0.01, 0.9: 0.01, 0.99: 0.001, 0.999: 0.0001},
 	}, []string{"method", "pattern", "status"})
 	prometheus.MustRegister(summary)
+
+	gauge := prometheus.NewGauge(prometheus.GaugeOpts{
+		Namespace: m.Namespace,
+		Subsystem: m.Subsystem,
+		Name:      m.Name + "_active_req",
+		Help:      m.Help,
+		ConstLabels: map[string]string{
+			"instance_id": m.InstanceID,
+		},
+	})
+	prometheus.MustRegister(gauge)
+
 	return func(c *gin.Context) {
 		start := time.Now()
+		gauge.Inc()
 		defer func() {
+			gauge.Dec()
 			duartion := time.Since(start)
-
 			pattern := c.FullPath()
 			//如果是404呢 方便表示
 			if pattern == "" {
