@@ -6,6 +6,7 @@ import (
 	"github.com/jym/mywebook/internal/web"
 	ijwt "github.com/jym/mywebook/internal/web/jwt"
 	"github.com/jym/mywebook/internal/web/middlewares"
+	"github.com/jym/mywebook/pkg/ginx/middlewares/metric"
 	"github.com/jym/mywebook/pkg/ginx/middlewares/ratelimit"
 	ratelimit2 "github.com/jym/mywebook/pkg/ratelimit"
 	"github.com/redis/go-redis/v9"
@@ -48,6 +49,13 @@ func InitMiddlewares(cmd redis.Cmdable, jwtHdl ijwt.Handler) []gin.HandlerFunc {
 			// 用于缓存预检请求结果的最大时间（CORS中的Access-Control-Max-Age）
 			MaxAge: 12 * time.Hour,
 		}),
+		(&metric.MiddlewareBuilder{
+			Namespace:  "jym",
+			Subsystem:  "webook",
+			Name:       "gin_http",
+			Help:       "统计gin的http接口",
+			InstanceID: "1",
+		}).Build(),
 		middlewares.NewLoginMiddlewareBuilder(jwtHdl).
 			IgnorePath("/user/login").IgnorePath("/user/signup").IgnorePath("/user/sms/send_code").
 			IgnorePath("/user/sms/login_sms").IgnorePath("/oauth2/wechat/authurl").IgnorePath("/oauth2/wechat/callback").
