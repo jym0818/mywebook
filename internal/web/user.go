@@ -66,7 +66,7 @@ func (h *UserHandler) Login(c *gin.Context) {
 	if err == service.ErrInvalidUserOrPassword {
 		c.JSON(http.StatusOK, Result{
 			Code: errs.UserInputValid,
-			Msg: "账号或者密码错误"
+			Msg:  "账号或者密码错误",
 		})
 		return
 	}
