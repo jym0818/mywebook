@@ -11,6 +11,7 @@ import (
 	ijwt "github.com/jym/mywebook/internal/web/jwt"
 	"github.com/jym/mywebook/pkg/logger"
 	"github.com/redis/go-redis/v9"
+	"go.opentelemetry.io/otel/trace"
 	"net/http"
 )
 
@@ -131,6 +132,8 @@ func (h *UserHandler) Signup(c *gin.Context) {
 		Email:    req.Email,
 	})
 	if err == service.ErrUserDuplicateEmail {
+		span := trace.SpanFromContext(c.Request.Context())
+		span.AddEvent("邮件冲突")
 		c.JSON(http.StatusOK, Result{Msg: "邮箱已注册"})
 		return
 	}
