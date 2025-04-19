@@ -10,6 +10,7 @@ import (
 	"github.com/jym/mywebook/pkg/ginx/middlewares/ratelimit"
 	ratelimit2 "github.com/jym/mywebook/pkg/ratelimit"
 	"github.com/redis/go-redis/v9"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 	"strings"
 	"time"
 )
@@ -56,6 +57,7 @@ func InitMiddlewares(cmd redis.Cmdable, jwtHdl ijwt.Handler) []gin.HandlerFunc {
 			Help:       "统计gin的http接口",
 			InstanceID: "1",
 		}).Build(),
+		otelgin.Middleware("webook"),
 		middlewares.NewLoginMiddlewareBuilder(jwtHdl).
 			IgnorePath("/user/login").IgnorePath("/user/signup").IgnorePath("/user/sms/send_code").
 			IgnorePath("/user/sms/login_sms").IgnorePath("/oauth2/wechat/authurl").IgnorePath("/oauth2/wechat/callback").
