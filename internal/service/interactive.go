@@ -13,6 +13,7 @@ type InteractiveService interface {
 	CancelLike(ctx context.Context, biz string, id int64, uid int64) error
 	Collect(ctx context.Context, biz string, id int64, cid int64, uid int64) error
 	Get(ctx context.Context, biz string, id int64, uid int64) (domain.Interactive, error)
+	GetByIds(ctx context.Context, biz string, ids []int64) (map[int64]domain.Interactive, error)
 }
 type interactiveService struct {
 	repo repository.InteractiveRepository

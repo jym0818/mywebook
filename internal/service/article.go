@@ -5,6 +5,7 @@ import (
 	"github.com/jym/mywebook/internal/domain"
 	"github.com/jym/mywebook/internal/events/article"
 	"github.com/jym/mywebook/internal/repository"
+	"time"
 )
 
 type ArticleService interface {
@@ -14,11 +15,17 @@ type ArticleService interface {
 	List(ctx context.Context, uid int64, limit int, offset int) ([]domain.Article, error)
 	GetById(ctx context.Context, id int64) (domain.Article, error)
 	GetPublishedById(ctx context.Context, id int64, uid int64) (domain.Article, error)
+
+	ListPub(ctx context.Context, start time.Time, offset, limit int) ([]domain.Article, error)
 }
 
 type articleService struct {
 	repo     repository.ArticleRepository
 	producer article.Producer
+}
+
+func (svc *articleService) ListPub(ctx context.Context, start time.Time, offset, limit int) ([]domain.Article, error) {
+	return svc.repo.ListPub(ctx, start, offset, limit)
 }
 
 func NewarticleService(repo repository.ArticleRepository, producer article.Producer) ArticleService {

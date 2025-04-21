@@ -52,14 +52,20 @@ func InitWeb() *App {
 	interactiveService := service.NewinteractiveService(interactiveRepository)
 	articleHandler := web.NewArticleHandler(articleService, interactiveService)
 	engine := ioc.InitGin(v2, userHandler, oAuth2WechatHandler, articleHandler)
+	rankingService := service.NewBatchRankingService(articleService, interactiveService)
+	job := ioc.InitRankingJob(rankingService)
+	cron := ioc.InitJobs(logger, job)
 	app := &App{
 		consumers: v,
 		web:       engine,
+		cron:      cron,
 	}
 	return app
 }
 
 // wire.go:
+
+var RankingService = wire.NewSet(repository.NewrankingRepository, cache.NewRedisRankingCache, service.NewBatchRankingService)
 
 var UserService = wire.NewSet(dao.NewuserDAO, cache.NewRedisUserCache, repository.NewuserRepository, service.NewuserService, web.NewUserHandler)
 

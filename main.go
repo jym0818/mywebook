@@ -28,12 +28,22 @@ func main() {
 			panic(err)
 		}
 	}
+	cron := app.cron
+	cron.Start()
+
 	server := app.web
 	server.Run(":8080")
 	//10s内必须关闭否则强制关闭
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	fn(ctx)
+	//可以考虑强制退出，防止有些任务执行时间太长
+	stop := cron.Stop()
+	timer := time.NewTimer(5 * time.Minute)
+	select {
+	case <-timer.C:
+	case <-stop.Done():
+	}
 }
 
 func initViper() {

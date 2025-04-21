@@ -14,6 +14,12 @@ import (
 	"github.com/jym/mywebook/ioc"
 )
 
+var RankingService = wire.NewSet(
+	repository.NewrankingRepository,
+	cache.NewRedisRankingCache,
+	service.NewBatchRankingService,
+)
+
 var UserService = wire.NewSet(
 	dao.NewuserDAO,
 	cache.NewRedisUserCache,
@@ -65,6 +71,10 @@ func InitWeb() *App {
 
 		article2.NewKafkaProducer,
 		article2.NewKafkaConsumer,
+
+		ioc.InitJobs,
+		ioc.InitRankingJob,
+		RankingService,
 		wire.Struct(new(App), "*"),
 	)
 	return new(App)

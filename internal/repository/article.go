@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"github.com/ecodeclub/ekit/slice"
 	"github.com/jym/mywebook/internal/domain"
 	"github.com/jym/mywebook/internal/repository/cache"
 	"github.com/jym/mywebook/internal/repository/dao"
@@ -16,12 +17,23 @@ type ArticleRepository interface {
 	List(ctx context.Context, uid int64, limit int, offset int) ([]domain.Article, error)
 	GetById(ctx context.Context, id int64) (domain.Article, error)
 	GetPublishedById(ctx context.Context, id int64) (domain.Article, error)
+	ListPub(ctx context.Context, start time.Time, offset int, limit int) ([]domain.Article, error)
 }
 
 type articleRepository struct {
 	dao      dao.ArticleDAO
 	cache    cache.ArticleCache
 	userRepo UserRepository
+}
+
+func (repo *articleRepository) ListPub(ctx context.Context, start time.Time, offset int, limit int) ([]domain.Article, error) {
+	res, err := repo.dao.ListPub(ctx, start, offset, limit)
+	if err != nil {
+		return nil, err
+	}
+	return slice.Map(res, func(idx int, src dao.Article) domain.Article {
+		return repo.toDomain(src)
+	}), nil
 }
 
 func (repo *articleRepository) GetPublishedById(ctx context.Context, id int64) (domain.Article, error) {
