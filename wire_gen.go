@@ -16,6 +16,10 @@ import (
 	"github.com/jym/mywebook/internal/web"
 	"github.com/jym/mywebook/internal/web/jwt"
 	"github.com/jym/mywebook/ioc"
+	repository2 "github.com/jym/webook-interactive/repository"
+	cache2 "github.com/jym/webook-interactive/repository/cache"
+	dao2 "github.com/jym/webook-interactive/repository/dao"
+	service2 "github.com/jym/webook-interactive/service"
 )
 
 // Injectors from wire.go:
@@ -24,10 +28,10 @@ func InitWeb() *App {
 	client := ioc.InitKafka()
 	logger := ioc.InitLogger()
 	db := ioc.InitDB()
-	interactiveDAO := dao.NewGORMInteractiveDAO(db)
+	interactiveDAO := dao2.NewGORMInteractiveDAO(db)
 	cmdable := ioc.InitRedis()
-	interactiveCache := cache.NewRedisInteractiveCache(cmdable)
-	interactiveRepository := repository.NewinteractiveRepository(interactiveDAO, interactiveCache)
+	interactiveCache := cache2.NewRedisInteractiveCache(cmdable)
+	interactiveRepository := repository2.NewinteractiveRepository(interactiveDAO, interactiveCache)
 	kafkaConsumer := article.NewKafkaConsumer(client, logger, interactiveRepository)
 	v := ioc.NewConsumers(kafkaConsumer)
 	handler := jwt.NewRedisJwt(cmdable)
@@ -49,7 +53,7 @@ func InitWeb() *App {
 	syncProducer := ioc.NewSyncProducer(client)
 	producer := article.NewKafkaProducer(syncProducer)
 	articleService := service.NewarticleService(articleRepository, producer)
-	interactiveService := service.NewinteractiveService(interactiveRepository)
+	interactiveService := service2.NewinteractiveService(interactiveRepository)
 	articleHandler := web.NewArticleHandler(articleService, interactiveService)
 	engine := ioc.InitGin(v2, userHandler, oAuth2WechatHandler, articleHandler)
 	rankingService := service.NewBatchRankingService(articleService, interactiveService)
@@ -73,4 +77,4 @@ var CodeService = wire.NewSet(cache.NewRedisCodeCache, repository.NewcodeReposit
 
 var ArticleService = wire.NewSet(dao.NewarticleDAO, repository.NewarticleRepository, service.NewarticleService, cache.NewRedisArticle)
 
-var InteractiveService = wire.NewSet(dao.NewGORMInteractiveDAO, repository.NewinteractiveRepository, service.NewinteractiveService, cache.NewRedisInteractiveCache)
+var InteractiveService = wire.NewSet(dao2.NewGORMInteractiveDAO, repository2.NewinteractiveRepository, service2.NewinteractiveService, cache2.NewRedisInteractiveCache)

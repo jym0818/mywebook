@@ -1,4 +1,4 @@
-module github.com/jym/mywebook
+module github.com/jym0818/mywebook
 
 go 1.23.7
 

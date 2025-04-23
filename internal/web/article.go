@@ -5,6 +5,7 @@ import (
 	"github.com/jym/mywebook/internal/domain"
 	"github.com/jym/mywebook/internal/service"
 	ijwt "github.com/jym/mywebook/internal/web/jwt"
+	service2 "github.com/jym/webook-interactive/service"
 	"golang.org/x/sync/errgroup"
 	"net/http"
 	"strconv"
@@ -13,7 +14,7 @@ import (
 
 type ArticleHandler struct {
 	svc     service.ArticleService
-	intrSvc service.InteractiveService
+	intrSvc service2.InteractiveService
 	biz     string
 }
 
@@ -31,7 +32,7 @@ func (h *ArticleHandler) RegisterRouters(s *gin.Engine) {
 	pub.POST("/collect", h.Collect)
 }
 
-func NewArticleHandler(svc service.ArticleService, intrSvc service.InteractiveService) *ArticleHandler {
+func NewArticleHandler(svc service.ArticleService, intrSvc service2.InteractiveService) *ArticleHandler {
 	return &ArticleHandler{
 		svc:     svc,
 		biz:     "article",

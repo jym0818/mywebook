@@ -12,6 +12,10 @@ import (
 	"github.com/jym/mywebook/internal/web"
 	ijwt "github.com/jym/mywebook/internal/web/jwt"
 	"github.com/jym/mywebook/ioc"
+	repository2 "github.com/jym/webook-interactive/repository"
+	cache2 "github.com/jym/webook-interactive/repository/cache"
+	dao2 "github.com/jym/webook-interactive/repository/dao"
+	service2 "github.com/jym/webook-interactive/service"
 )
 
 var RankingService = wire.NewSet(
@@ -42,10 +46,10 @@ var ArticleService = wire.NewSet(
 	cache.NewRedisArticle,
 )
 var InteractiveService = wire.NewSet(
-	dao.NewGORMInteractiveDAO,
-	repository.NewinteractiveRepository,
-	service.NewinteractiveService,
-	cache.NewRedisInteractiveCache,
+	dao2.NewGORMInteractiveDAO,
+	repository2.NewinteractiveRepository,
+	service2.NewinteractiveService,
+	cache2.NewRedisInteractiveCache,
 )
 
 func InitWeb() *App {
