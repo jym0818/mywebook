@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/ecodeclub/ekit/queue"
 	"github.com/ecodeclub/ekit/slice"
+	service2 "github.com/jym/mywebook/interactive/service"
 	"github.com/jym/mywebook/internal/domain"
 	"github.com/jym/mywebook/internal/repository"
 	"math"
@@ -17,7 +18,7 @@ type RankingService interface {
 
 type BatchRankingService struct {
 	artSvc    ArticleService
-	intrSvc   InteractiveService
+	intrSvc   service2.InteractiveService
 	batchSize int
 	n         int
 	//规避计算出负值 否则一开始没有点赞数据都是负数了进不去队列了
@@ -25,7 +26,7 @@ type BatchRankingService struct {
 	repo      repository.RankingRepository
 }
 
-func NewBatchRankingService(artSvc ArticleService, intrSvc InteractiveService) RankingService {
+func NewBatchRankingService(artSvc ArticleService, intrSvc service2.InteractiveService) RankingService {
 	return &BatchRankingService{
 		artSvc:    artSvc,
 		intrSvc:   intrSvc,

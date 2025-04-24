@@ -4,6 +4,10 @@ package main
 
 import (
 	"github.com/google/wire"
+	repository2 "github.com/jym/mywebook/interactive/repository"
+	cache2 "github.com/jym/mywebook/interactive/repository/cache"
+	dao2 "github.com/jym/mywebook/interactive/repository/dao"
+	service2 "github.com/jym/mywebook/interactive/service"
 	article2 "github.com/jym/mywebook/internal/events/article"
 	"github.com/jym/mywebook/internal/repository"
 	"github.com/jym/mywebook/internal/repository/cache"
@@ -42,10 +46,10 @@ var ArticleService = wire.NewSet(
 	cache.NewRedisArticle,
 )
 var InteractiveService = wire.NewSet(
-	dao.NewGORMInteractiveDAO,
-	repository.NewinteractiveRepository,
-	service.NewinteractiveService,
-	cache.NewRedisInteractiveCache,
+	dao2.NewGORMInteractiveDAO,
+	repository2.NewinteractiveRepository,
+	service2.NewinteractiveService,
+	cache2.NewRedisInteractiveCache,
 )
 
 func InitWeb() *App {

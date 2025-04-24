@@ -2,8 +2,8 @@ package service
 
 import (
 	"context"
-	"github.com/jym/mywebook/internal/domain"
-	"github.com/jym/mywebook/internal/repository"
+	"github.com/jym/mywebook/interactive/domain"
+	"github.com/jym/mywebook/interactive/repository"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -17,6 +17,11 @@ type InteractiveService interface {
 }
 type interactiveService struct {
 	repo repository.InteractiveRepository
+}
+
+func (svc *interactiveService) GetByIds(ctx context.Context, biz string, ids []int64) (map[int64]domain.Interactive, error) {
+	//TODO implement me
+	panic("implement me")
 }
 
 func (svc *interactiveService) Get(ctx context.Context, biz string, id int64, uid int64) (domain.Interactive, error) {

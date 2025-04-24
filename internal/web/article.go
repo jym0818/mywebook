@@ -2,6 +2,8 @@ package web
 
 import (
 	"github.com/gin-gonic/gin"
+	domain2 "github.com/jym/mywebook/interactive/domain"
+	service2 "github.com/jym/mywebook/interactive/service"
 	"github.com/jym/mywebook/internal/domain"
 	"github.com/jym/mywebook/internal/service"
 	ijwt "github.com/jym/mywebook/internal/web/jwt"
@@ -13,7 +15,7 @@ import (
 
 type ArticleHandler struct {
 	svc     service.ArticleService
-	intrSvc service.InteractiveService
+	intrSvc service2.InteractiveService
 	biz     string
 }
 
@@ -31,7 +33,7 @@ func (h *ArticleHandler) RegisterRouters(s *gin.Engine) {
 	pub.POST("/collect", h.Collect)
 }
 
-func NewArticleHandler(svc service.ArticleService, intrSvc service.InteractiveService) *ArticleHandler {
+func NewArticleHandler(svc service.ArticleService, intrSvc service2.InteractiveService) *ArticleHandler {
 	return &ArticleHandler{
 		svc:     svc,
 		biz:     "article",
@@ -208,7 +210,7 @@ func (h *ArticleHandler) PubDetail(ctx *gin.Context) {
 	var (
 		eg   errgroup.Group
 		art  domain.Article
-		intr domain.Interactive
+		intr domain2.Interactive
 	)
 	eg.Go(func() error {
 		var er error

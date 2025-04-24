@@ -1,9 +1,9 @@
-package article
+package events
 
 import (
 	"context"
 	"github.com/IBM/sarama"
-	"github.com/jym/mywebook/internal/repository"
+	"github.com/jym/mywebook/interactive/repository"
 	"github.com/jym/mywebook/pkg/logger"
 	"github.com/jym/mywebook/pkg/saramax"
 	"time"
