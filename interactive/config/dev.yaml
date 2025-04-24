@@ -7,3 +7,6 @@ redis:
 kafka:
   addrs:
     - "47.120.51.5:9094"
+
+grpc:
+  addr: ":8090"

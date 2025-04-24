@@ -3,6 +3,7 @@ package ioc
 import (
 	"github.com/IBM/sarama"
 	"github.com/jym/mywebook/interactive/events"
+	"github.com/jym/mywebook/pkg/saramax"
 	"github.com/spf13/viper"
 )
 
@@ -24,6 +25,6 @@ func InitKafka() sarama.Client {
 	return client
 }
 
-func NewConsumers(c1 *events.KafkaConsumer) []events.Consumer {
-	return []events.Consumer{c1}
+func NewConsumers(c1 *events.KafkaConsumer) []saramax.Consumer {
+	return []saramax.Consumer{c1}
 }

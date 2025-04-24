@@ -9,9 +9,6 @@ import (
 	"time"
 )
 
-type Consumer interface {
-	Start() error
-}
 type KafkaConsumer struct {
 	client sarama.Client
 	repo   repository.InteractiveRepository

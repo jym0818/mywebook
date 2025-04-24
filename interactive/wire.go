@@ -4,6 +4,7 @@ package main
 
 import (
 	"github.com/google/wire"
+	"github.com/jym/mywebook/interactive/events"
 	"github.com/jym/mywebook/interactive/grpc"
 	"github.com/jym/mywebook/interactive/ioc"
 	"github.com/jym/mywebook/interactive/repository"
@@ -19,12 +20,18 @@ var interactiveSvc = wire.NewSet(
 	cache.NewRedisInteractiveCache,
 )
 
-func InitGRPCServer() *grpc.InteractiveServiceServer {
+func InitGRPCServer() *App {
 	wire.Build(
 		interactiveSvc,
 		ioc.InitRedis,
 		ioc.InitDB,
+		ioc.InitKafka,
+		ioc.InitLogger,
+		events.NewKafkaConsumer,
+		ioc.NewConsumers,
 		grpc.NewInteractiveServiceServer,
+		ioc.InitGRPCxServe,
+		wire.Struct(new(App), "*"),
 	)
-	return new(grpc.InteractiveServiceServer)
+	return new(App)
 }

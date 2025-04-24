@@ -1,28 +1,24 @@
 package main
 
 import (
-	intrv1 "github.com/jym/mywebook/api/proto/gen/intr/v1"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
-	"log"
-	"net"
 )
 
 func main() {
 	initViper()
-	server := grpc.NewServer()
-	defer server.GracefulStop()
-	intrSvc := InitGRPCServer()
-	intrv1.RegisterInteractiveServiceServer(server, intrSvc)
+	app := InitGRPCServer()
+	for _, c := range app.consumers {
+		err := c.Start()
+		if err != nil {
+			panic(err)
+		}
+	}
 
-	l, err := net.Listen("tcp", ":8090")
-
+	err := app.server.Serve()
 	if err != nil {
 		panic(err)
 	}
-	//阻塞在这里
-	err = server.Serve(l)
-	log.Println(err)
+
 }
 
 func initViper() {

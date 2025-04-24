@@ -8,6 +8,7 @@ package main
 
 import (
 	"github.com/google/wire"
+	"github.com/jym/mywebook/interactive/events"
 	"github.com/jym/mywebook/interactive/grpc"
 	"github.com/jym/mywebook/interactive/ioc"
 	"github.com/jym/mywebook/interactive/repository"
@@ -18,7 +19,7 @@ import (
 
 // Injectors from wire.go:
 
-func InitGRPCServer() *grpc.InteractiveServiceServer {
+func InitGRPCServer() *App {
 	db := ioc.InitDB()
 	interactiveDAO := dao.NewGORMInteractiveDAO(db)
 	cmdable := ioc.InitRedis()
@@ -26,7 +27,16 @@ func InitGRPCServer() *grpc.InteractiveServiceServer {
 	interactiveRepository := repository.NewinteractiveRepository(interactiveDAO, interactiveCache)
 	interactiveService := service.NewinteractiveService(interactiveRepository)
 	interactiveServiceServer := grpc.NewInteractiveServiceServer(interactiveService)
-	return interactiveServiceServer
+	server := ioc.InitGRPCxServe(interactiveServiceServer)
+	client := ioc.InitKafka()
+	logger := ioc.InitLogger()
+	kafkaConsumer := events.NewKafkaConsumer(client, logger, interactiveRepository)
+	v := ioc.NewConsumers(kafkaConsumer)
+	app := &App{
+		server:    server,
+		consumers: v,
+	}
+	return app
 }
 
 // wire.go:
