@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/ecodeclub/ekit/queue"
 	"github.com/ecodeclub/ekit/slice"
-	service2 "github.com/jym/mywebook/interactive/service"
+	intrv1 "github.com/jym/mywebook/api/proto/gen/intr/v1"
 	"github.com/jym/mywebook/internal/domain"
 	"github.com/jym/mywebook/internal/repository"
 	"math"
@@ -18,7 +18,7 @@ type RankingService interface {
 
 type BatchRankingService struct {
 	artSvc    ArticleService
-	intrSvc   service2.InteractiveService
+	intrSvc   intrv1.InteractiveServiceClient
 	batchSize int
 	n         int
 	//规避计算出负值 否则一开始没有点赞数据都是负数了进不去队列了
@@ -26,7 +26,7 @@ type BatchRankingService struct {
 	repo      repository.RankingRepository
 }
 
-func NewBatchRankingService(artSvc ArticleService, intrSvc service2.InteractiveService) RankingService {
+func NewBatchRankingService(artSvc ArticleService, intrSvc intrv1.InteractiveServiceClient) RankingService {
 	return &BatchRankingService{
 		artSvc:    artSvc,
 		intrSvc:   intrSvc,
@@ -72,13 +72,16 @@ func (svc *BatchRankingService) topN(ctx context.Context) ([]domain.Article, err
 			return src.Id
 		})
 		//再拿到这批数据的点赞数
-		intrs, err := svc.intrSvc.GetByIds(ctx, "article", ids)
+		intrs, err := svc.intrSvc.GetByIds(ctx, &intrv1.GetByIdsRequest{
+			Ids: ids,
+			Biz: "article",
+		})
 		if err != nil {
 			return nil, err
 		}
 		//合并结算score
 		for _, art := range arts {
-			intr, _ := intrs[art.Id]
+			intr, _ := intrs.Intrs[art.Id]
 
 			score := svc.scoreFunc(art.Utime, intr.LikeCnt)
 			//排序

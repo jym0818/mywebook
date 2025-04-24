@@ -2,8 +2,7 @@ package web
 
 import (
 	"github.com/gin-gonic/gin"
-	domain2 "github.com/jym/mywebook/interactive/domain"
-	service2 "github.com/jym/mywebook/interactive/service"
+	intrv1 "github.com/jym/mywebook/api/proto/gen/intr/v1"
 	"github.com/jym/mywebook/internal/domain"
 	"github.com/jym/mywebook/internal/service"
 	ijwt "github.com/jym/mywebook/internal/web/jwt"
@@ -15,7 +14,7 @@ import (
 
 type ArticleHandler struct {
 	svc     service.ArticleService
-	intrSvc service2.InteractiveService
+	intrSvc intrv1.InteractiveServiceClient
 	biz     string
 }
 
@@ -33,7 +32,7 @@ func (h *ArticleHandler) RegisterRouters(s *gin.Engine) {
 	pub.POST("/collect", h.Collect)
 }
 
-func NewArticleHandler(svc service.ArticleService, intrSvc service2.InteractiveService) *ArticleHandler {
+func NewArticleHandler(svc service.ArticleService, intrSvc intrv1.InteractiveServiceClient) *ArticleHandler {
 	return &ArticleHandler{
 		svc:     svc,
 		biz:     "article",
@@ -210,7 +209,7 @@ func (h *ArticleHandler) PubDetail(ctx *gin.Context) {
 	var (
 		eg   errgroup.Group
 		art  domain.Article
-		intr domain2.Interactive
+		intr *intrv1.GetResponse
 	)
 	eg.Go(func() error {
 		var er error
@@ -219,7 +218,11 @@ func (h *ArticleHandler) PubDetail(ctx *gin.Context) {
 	})
 	eg.Go(func() error {
 		var er error
-		intr, er = h.intrSvc.Get(ctx.Request.Context(), h.biz, id, claims.Uid)
+		intr, er = h.intrSvc.Get(ctx.Request.Context(), &intrv1.GetRequest{
+			Biz:   h.biz,
+			BizId: id,
+			Uid:   claims.Uid,
+		})
 		return er
 	})
 	err = eg.Wait()
@@ -249,11 +252,11 @@ func (h *ArticleHandler) PubDetail(ctx *gin.Context) {
 			AuthorName: art.Author.Name,
 			Ctime:      art.Ctime.Format(time.DateTime),
 			Utime:      art.Utime.Format(time.DateTime),
-			ReadCnt:    intr.ReadCnt,
-			LikeCnt:    intr.LikeCnt,
-			CollectCnt: intr.CollectCnt,
-			Liked:      intr.Liked,
-			Collected:  intr.Collected,
+			ReadCnt:    intr.Intr.ReadCnt,
+			LikeCnt:    intr.Intr.LikeCnt,
+			CollectCnt: intr.Intr.CollectCnt,
+			Liked:      intr.Intr.Liked,
+			Collected:  intr.Intr.Collected,
 		},
 	})
 }
@@ -266,9 +269,18 @@ func (h *ArticleHandler) Like(ctx *gin.Context) {
 	claims := ctx.MustGet("claims").(ijwt.UserClaims)
 	var err error
 	if req.Like {
-		err = h.intrSvc.Like(ctx.Request.Context(), h.biz, req.Id, claims.Uid)
+		//h.biz, req.Id, claims.Uid
+		_, err = h.intrSvc.Like(ctx.Request.Context(), &intrv1.LikeRequest{
+			Biz:   h.biz,
+			BizId: req.Id,
+			Uid:   claims.Uid,
+		})
 	} else {
-		err = h.intrSvc.CancelLike(ctx.Request.Context(), h.biz, req.Id, claims.Uid)
+		_, err = h.intrSvc.CancelLike(ctx.Request.Context(), &intrv1.CancelLikeRequest{
+			Biz:   h.biz,
+			BizId: req.Id,
+			Uid:   claims.Uid,
+		})
 	}
 	if err != nil {
 		ctx.JSON(http.StatusOK, Result{
@@ -287,7 +299,12 @@ func (h *ArticleHandler) Collect(ctx *gin.Context) {
 		return
 	}
 	claims := ctx.MustGet("claims").(ijwt.UserClaims)
-	err := h.intrSvc.Collect(ctx.Request.Context(), h.biz, req.Id, req.Cid, claims.Uid)
+	_, err := h.intrSvc.Collect(ctx.Request.Context(), &intrv1.CollectRequest{
+		Biz:   h.biz,
+		BizId: req.Id,
+		Cid:   req.Cid,
+		Uid:   claims.Uid,
+	})
 	if err != nil {
 		ctx.JSON(http.StatusOK, Result{
 			Msg: "系统错误",
