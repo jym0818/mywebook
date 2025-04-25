@@ -2,7 +2,6 @@ package ioc
 
 import (
 	"github.com/IBM/sarama"
-	"github.com/jym/mywebook/internal/events/article"
 	"github.com/spf13/viper"
 )
 
@@ -30,8 +29,4 @@ func NewSyncProducer(client sarama.Client) sarama.SyncProducer {
 		panic(err)
 	}
 	return res
-}
-
-func NewConsumers(c1 *article.KafkaConsumer) []article.Consumer {
-	return []article.Consumer{c1}
 }

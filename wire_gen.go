@@ -25,17 +25,10 @@ import (
 // Injectors from wire.go:
 
 func InitWeb() *App {
-	client := ioc.InitKafka()
-	logger := ioc.InitLogger()
-	db := ioc.InitDB()
-	interactiveDAO := dao2.NewGORMInteractiveDAO(db)
 	cmdable := ioc.InitRedis()
-	interactiveCache := cache2.NewRedisInteractiveCache(cmdable)
-	interactiveRepository := repository2.NewinteractiveRepository(interactiveDAO, interactiveCache)
-	kafkaConsumer := article.NewKafkaConsumer(client, logger, interactiveRepository)
-	v := ioc.NewConsumers(kafkaConsumer)
 	handler := jwt.NewRedisJwt(cmdable)
-	v2 := ioc.InitMiddlewares(cmdable, handler)
+	v := ioc.InitMiddlewares(cmdable, handler)
+	db := ioc.InitDB()
 	userDAO := dao.NewuserDAO(db)
 	userCache := cache.NewRedisUserCache(cmdable)
 	userRepository := repository.NewuserRepository(userDAO, userCache)
@@ -44,25 +37,30 @@ func InitWeb() *App {
 	codeRepository := repository.NewcodeRepository(codeCache)
 	smsService := ioc.InitSMS(cmdable)
 	codeService := service.NewcodeService(codeRepository, smsService)
+	logger := ioc.InitLogger()
 	userHandler := web.NewUserHandler(userService, codeService, cmdable, handler, logger)
 	wechatService := ioc.InitWechat()
 	oAuth2WechatHandler := web.NewOAuth2WechatHandler(wechatService, userService, handler)
 	articleDAO := dao.NewarticleDAO(db)
 	articleCache := cache.NewRedisArticle(cmdable)
 	articleRepository := repository.NewarticleRepository(articleDAO, articleCache, userRepository)
+	client := ioc.InitKafka()
 	syncProducer := ioc.NewSyncProducer(client)
 	producer := article.NewKafkaProducer(syncProducer)
 	articleService := service.NewarticleService(articleRepository, producer)
+	interactiveDAO := dao2.NewGORMInteractiveDAO(db)
+	interactiveCache := cache2.NewRedisInteractiveCache(cmdable)
+	interactiveRepository := repository2.NewinteractiveRepository(interactiveDAO, interactiveCache)
 	interactiveService := service2.NewinteractiveService(interactiveRepository)
-	articleHandler := web.NewArticleHandler(articleService, interactiveService)
-	engine := ioc.InitGin(v2, userHandler, oAuth2WechatHandler, articleHandler)
-	rankingService := service.NewBatchRankingService(articleService, interactiveService)
+	interactiveServiceClient := ioc.InitIntrGRPCClient(interactiveService)
+	articleHandler := web.NewArticleHandler(articleService, interactiveServiceClient)
+	engine := ioc.InitGin(v, userHandler, oAuth2WechatHandler, articleHandler)
+	rankingService := service.NewBatchRankingService(articleService, interactiveServiceClient)
 	job := ioc.InitRankingJob(rankingService)
 	cron := ioc.InitJobs(logger, job)
 	app := &App{
-		consumers: v,
-		web:       engine,
-		cron:      cron,
+		web:  engine,
+		cron: cron,
 	}
 	return app
 }

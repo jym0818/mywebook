@@ -13,7 +13,7 @@ func InitGRPCxServe(intr *grpc2.InteractiveServiceServer) *grpcx.Server {
 	}
 
 	var cfg Config
-	err := viper.UnmarshalKey("grpc", &cfg)
+	err := viper.UnmarshalKey("grpc.server", &cfg)
 	if err != nil {
 		panic(err)
 	}

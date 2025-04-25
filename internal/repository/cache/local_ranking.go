@@ -17,8 +17,8 @@ type RankingLocalCache struct {
 
 func NewRankingLocalCache() *RankingLocalCache {
 	return &RankingLocalCache{
-		ddl:  atomicx.NewValueOf[](time.Now()),
 		topN: atomicx.NewValue[[]domain.Article](),
+		ddl:  atomicx.NewValueOf(time.Now()),
 		//永不过期 或者非常长
 		expiration: time.Minute * 3,
 	}

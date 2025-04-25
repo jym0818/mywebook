@@ -60,6 +60,9 @@ func InitWeb() *App {
 		ioc.InitGin,
 		ioc.InitMiddlewares,
 		ioc.InitLogger,
+
+		ioc.InitIntrGRPCClient,
+
 		UserService,
 		CodeService,
 		ioc.InitWechat,
@@ -71,10 +74,8 @@ func InitWeb() *App {
 
 		ioc.InitKafka,
 		ioc.NewSyncProducer,
-		ioc.NewConsumers,
 
 		article2.NewKafkaProducer,
-		article2.NewKafkaConsumer,
 
 		ioc.InitJobs,
 		ioc.InitRankingJob,
