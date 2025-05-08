@@ -55,3 +55,11 @@ services:
     image: grafana/grafana-enterprise:10.2.0
     ports:
       - 3000:3000
+
+  etcd:
+    image: 'bitnami/etcd:3.5.9'
+    environment:
+      - ALLOW_NONE_AUTHENTICATION=yes
+    ports:
+      #      所以你要用 12379 端口来连接 etcd
+      - 12379:2379
