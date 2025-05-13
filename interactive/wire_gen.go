@@ -27,9 +27,9 @@ func InitGRPCServer() *App {
 	interactiveRepository := repository.NewinteractiveRepository(interactiveDAO, interactiveCache)
 	interactiveService := service.NewinteractiveService(interactiveRepository)
 	interactiveServiceServer := grpc.NewInteractiveServiceServer(interactiveService)
-	server := ioc.InitGRPCxServe(interactiveServiceServer)
-	client := ioc.InitKafka()
 	logger := ioc.InitLogger()
+	server := ioc.InitGRPCxServe(interactiveServiceServer, logger)
+	client := ioc.InitKafka()
 	kafkaConsumer := events.NewKafkaConsumer(client, logger, interactiveRepository)
 	v := ioc.NewConsumers(kafkaConsumer)
 	app := &App{

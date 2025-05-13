@@ -8,8 +8,12 @@ kafka:
   addrs:
     - "47.120.51.5:9094"
 
-grpc:
-  client:
-    intr:
-      addr: "localhost:8090"
-      threshold: 100
+#流量控制
+#grpc:
+#  client:
+#    intr:
+#      addr: "localhost:8090"
+#      threshold: 100
+etcd:
+  endpoints:
+    - "47.120.51.5:12379"

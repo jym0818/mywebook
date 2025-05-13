@@ -8,10 +8,6 @@ package main
 
 import (
 	"github.com/google/wire"
-	repository2 "github.com/jym/mywebook/interactive/repository"
-	cache2 "github.com/jym/mywebook/interactive/repository/cache"
-	dao2 "github.com/jym/mywebook/interactive/repository/dao"
-	service2 "github.com/jym/mywebook/interactive/service"
 	"github.com/jym/mywebook/internal/events/article"
 	"github.com/jym/mywebook/internal/repository"
 	"github.com/jym/mywebook/internal/repository/cache"
@@ -48,11 +44,8 @@ func InitWeb() *App {
 	syncProducer := ioc.NewSyncProducer(client)
 	producer := article.NewKafkaProducer(syncProducer)
 	articleService := service.NewarticleService(articleRepository, producer)
-	interactiveDAO := dao2.NewGORMInteractiveDAO(db)
-	interactiveCache := cache2.NewRedisInteractiveCache(cmdable)
-	interactiveRepository := repository2.NewinteractiveRepository(interactiveDAO, interactiveCache)
-	interactiveService := service2.NewinteractiveService(interactiveRepository)
-	interactiveServiceClient := ioc.InitIntrGRPCClient(interactiveService)
+	clientv3Client := ioc.InitEtcd()
+	interactiveServiceClient := ioc.InitIntrGRPCClient(clientv3Client)
 	articleHandler := web.NewArticleHandler(articleService, interactiveServiceClient)
 	engine := ioc.InitGin(v, userHandler, oAuth2WechatHandler, articleHandler)
 	rankingService := service.NewBatchRankingService(articleService, interactiveServiceClient)
@@ -74,5 +67,3 @@ var UserService = wire.NewSet(dao.NewuserDAO, cache.NewRedisUserCache, repositor
 var CodeService = wire.NewSet(cache.NewRedisCodeCache, repository.NewcodeRepository, service.NewcodeService)
 
 var ArticleService = wire.NewSet(dao.NewarticleDAO, repository.NewarticleRepository, service.NewarticleService, cache.NewRedisArticle)
-
-var InteractiveService = wire.NewSet(dao2.NewGORMInteractiveDAO, repository2.NewinteractiveRepository, service2.NewinteractiveService, cache2.NewRedisInteractiveCache)
